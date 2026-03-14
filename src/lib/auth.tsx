@@ -8,6 +8,12 @@ export interface User {
   name: string;
 }
 
+export interface Evidence {
+  type: 'photo' | 'video' | 'audio';
+  dataUrl: string;
+  timestamp: string;
+}
+
 export interface Incident {
   id: string;
   victimName: string;
@@ -18,6 +24,7 @@ export interface Incident {
   status: 'pending' | 'resolved';
   actionTaken?: string;
   reportedBy: string;
+  evidence?: Evidence[];
 }
 
 export interface TrustedContact {

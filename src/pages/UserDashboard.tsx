@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth, saveIncident, Incident, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth, saveIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
+import EvidenceCapture from '@/components/EvidenceCapture';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,34 @@ import { toast } from 'sonner';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
+// Generate SOS alarm using Web Audio API
+const playSOSAlarm = () => {
+  try {
+    const ctx = new AudioContext();
+    const playTone = (freq: number, start: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'square';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
+      osc.start(ctx.currentTime + start);
+      osc.stop(ctx.currentTime + start + duration);
+    };
+    // SOS pattern: 3 short, 3 long, 3 short
+    const short = 0.15, long = 0.4, gap = 0.1;
+    let t = 0;
+    for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
+    for (let i = 0; i < 3; i++) { playTone(880, t, long); t += long + gap; }
+    for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
+    setTimeout(() => ctx.close(), (t + 1) * 1000);
+  } catch {
+    // Audio not supported
+  }
+};
+
 const UserDashboard = () => {
   const { user } = useAuth();
   const [victimName, setVictimName] = useState('');
@@ -17,6 +46,7 @@ const UserDashboard = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [sosActive, setSosActive] = useState(false);
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
 
   // Trusted contacts
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
@@ -37,7 +67,6 @@ const UserDashboard = () => {
           toast.success('Location detected');
         },
         () => {
-          // fallback
           setLocation({ lat: 28.6139, lng: 77.2090 });
           setLocLoading(false);
           toast.info('Using default location');
@@ -51,9 +80,17 @@ const UserDashboard = () => {
 
   useEffect(() => { getLocation(); }, [getLocation]);
 
+  const openMap = () => {
+    if (!location) return;
+    window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSOS = () => {
     if (!victimName.trim()) { toast.error('Enter victim name'); return; }
     if (!incidentType) { toast.error('Select incident type'); return; }
+
+    // Play SOS alarm sound
+    playSOSAlarm();
     
     setSosActive(true);
     const incident: Incident = {
@@ -65,12 +102,14 @@ const UserDashboard = () => {
       time: new Date().toISOString(),
       status: 'pending',
       reportedBy: user?.email || '',
+      evidence: evidence.length > 0 ? evidence : undefined,
     };
     saveIncident(incident);
     toast.success('🚨 SOS Alert Sent!');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
     setIncidentType('');
+    setEvidence([]);
   };
 
   const handleAddContact = () => {
@@ -87,6 +126,9 @@ const UserDashboard = () => {
     removeContact(user!.email, id);
     setContacts(prev => prev.filter(c => c.id !== id));
   };
+
+  const addEvidence = (ev: Evidence) => setEvidence(prev => [...prev, ev]);
+  const removeEvidence = (idx: number) => setEvidence(prev => prev.filter((_, i) => i !== idx));
 
   return (
     <div className="min-h-screen bg-background">
@@ -125,7 +167,7 @@ const UserDashboard = () => {
 
             {/* Location */}
             <div className="rounded-lg bg-muted p-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-primary" />
                   {locLoading ? (
@@ -141,19 +183,16 @@ const UserDashboard = () => {
                     <Navigation className="mr-1 h-3 w-3" /> Refresh
                   </Button>
                   {location && (
-                    <a
-                      href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Button variant="ghost" size="sm" className="h-7 text-xs">
-                        <MapPin className="mr-1 h-3 w-3" /> Open Map
-                      </Button>
-                    </a>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={openMap}>
+                      <MapPin className="mr-1 h-3 w-3" /> Open Map
+                    </Button>
                   )}
                 </div>
               </div>
             </div>
+
+            {/* Evidence Capture */}
+            <EvidenceCapture evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
 
             {/* SOS Button */}
             <motion.button
