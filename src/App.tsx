@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/lib/theme";
 import LoginPage from "./pages/LoginPage";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserHistory from "./pages/UserHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
