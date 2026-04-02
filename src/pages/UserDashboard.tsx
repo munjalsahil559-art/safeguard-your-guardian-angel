@@ -4,6 +4,7 @@ import AppHeader from '@/components/AppHeader';
 import EvidenceCapture from '@/components/EvidenceCapture';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone } from 'lucide-react';
