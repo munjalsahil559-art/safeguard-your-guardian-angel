@@ -55,6 +55,7 @@ const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: {
 const UserDashboard = () => {
   const { user } = useAuth();
   const [victimName, setVictimName] = useState('');
+  const [description, setDescription] = useState('');
   const [incidentType, setIncidentType] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
