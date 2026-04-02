@@ -23,7 +23,18 @@ const AppHeader = () => {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {user && user.role === 'user' && (
+            <Button
+              variant={location.pathname === '/history' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => navigate(location.pathname === '/history' ? '/dashboard' : '/history')}
+              className="h-8 text-xs"
+            >
+              <History className="mr-1 h-3 w-3" />
+              {location.pathname === '/history' ? 'Dashboard' : 'History'}
+            </Button>
+          )}
           {user && (
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {user.name} ({user.role})

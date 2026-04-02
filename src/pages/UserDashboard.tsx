@@ -191,7 +191,12 @@ const UserDashboard = () => {
                     {type}
                   </button>
                 ))}
-              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="desc">Description (optional)</Label>
+              <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the situation..." className="mt-1" rows={3} />
+            </div>
             </div>
 
             {/* Location */}
