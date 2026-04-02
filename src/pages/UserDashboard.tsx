@@ -127,9 +127,10 @@ const UserDashboard = () => {
     toast.success('🚨 SOS Alert Sent!');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
+    setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, incidentType, location, user, evidence]);
+  }, [victimName, description, incidentType, location, user, evidence]);
 
   // Shake to trigger SOS
   useShakeDetection(() => {
