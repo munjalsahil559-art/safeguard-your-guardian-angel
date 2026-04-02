@@ -135,7 +135,17 @@ const EvidenceCapture = ({ evidence, onAdd, onRemove }: EvidenceCaptureProps) =>
             className="rounded-lg border border-border bg-muted overflow-hidden"
           >
             {(activeMode === 'photo' || activeMode === 'video') && (
-              <video ref={videoRef} className="w-full rounded-t-lg" autoPlay muted playsInline />
+              <div className="relative">
+                <video ref={videoRef} className="w-full rounded-t-lg" autoPlay muted playsInline />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 backdrop-blur-sm"
+                  onClick={switchCamera}
+                >
+                  <SwitchCamera className="h-4 w-4" />
+                </Button>
+              </div>
             )}
             {activeMode === 'audio' && (
               <div className="flex items-center justify-center py-8">
