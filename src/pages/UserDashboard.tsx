@@ -4,6 +4,7 @@ import AppHeader from '@/components/AppHeader';
 import EvidenceCapture from '@/components/EvidenceCapture';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone } from 'lucide-react';
@@ -55,6 +56,7 @@ const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: {
 const UserDashboard = () => {
   const { user } = useAuth();
   const [victimName, setVictimName] = useState('');
+  const [description, setDescription] = useState('');
   const [incidentType, setIncidentType] = useState('');
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
@@ -109,6 +111,7 @@ const UserDashboard = () => {
       id: crypto.randomUUID(),
       victimName: name,
       incidentType: type,
+      description: description.trim() || undefined,
       latitude: location?.lat || 28.6139,
       longitude: location?.lng || 77.2090,
       time: new Date().toISOString(),
@@ -125,9 +128,10 @@ const UserDashboard = () => {
     toast.success('🚨 SOS Alert Sent!');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
+    setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, incidentType, location, user, evidence]);
+  }, [victimName, description, incidentType, location, user, evidence]);
 
   // Shake to trigger SOS
   useShakeDetection(() => {
@@ -187,7 +191,12 @@ const UserDashboard = () => {
                     {type}
                   </button>
                 ))}
-              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="desc">Description (optional)</Label>
+              <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the situation..." className="mt-1" rows={3} />
+            </div>
             </div>
 
             {/* Location */}

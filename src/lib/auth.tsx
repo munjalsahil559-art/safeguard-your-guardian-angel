@@ -21,6 +21,7 @@ export interface Incident {
   latitude: number;
   longitude: number;
   time: string;
+  description?: string;
   status: 'pending' | 'resolved';
   actionTaken?: string;
   reportedBy: string;

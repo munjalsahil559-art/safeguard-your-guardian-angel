@@ -1,12 +1,15 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
-import { Shield, Moon, Sun, LogOut } from 'lucide-react';
+import { Shield, Moon, Sun, LogOut, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AppHeader = () => {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <header className="border-b border-border bg-card">
@@ -20,7 +23,18 @@ const AppHeader = () => {
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {user && user.role === 'user' && (
+            <Button
+              variant={location.pathname === '/history' ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => navigate(location.pathname === '/history' ? '/dashboard' : '/history')}
+              className="h-8 text-xs"
+            >
+              <History className="mr-1 h-3 w-3" />
+              {location.pathname === '/history' ? 'Dashboard' : 'History'}
+            </Button>
+          )}
           {user && (
             <span className="hidden text-sm text-muted-foreground sm:inline">
               {user.name} ({user.role})
