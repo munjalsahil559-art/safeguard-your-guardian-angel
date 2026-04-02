@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth, saveIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
 import EvidenceCapture from '@/components/EvidenceCapture';
@@ -6,12 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
+import { useShakeDetection } from '@/hooks/useShakeDetection';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
-// Generate SOS alarm using Web Audio API
 const playSOSAlarm = () => {
   try {
     const ctx = new AudioContext();
@@ -27,16 +27,29 @@ const playSOSAlarm = () => {
       osc.start(ctx.currentTime + start);
       osc.stop(ctx.currentTime + start + duration);
     };
-    // SOS pattern: 3 short, 3 long, 3 short
     const short = 0.15, long = 0.4, gap = 0.1;
     let t = 0;
     for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
     for (let i = 0; i < 3; i++) { playTone(880, t, long); t += long + gap; }
     for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
     setTimeout(() => ctx.close(), (t + 1) * 1000);
-  } catch {
-    // Audio not supported
-  }
+  } catch {}
+};
+
+const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: { lat: number; lng: number } | null) => {
+  if (contacts.length === 0) return;
+  const mapLink = location
+    ? `https://www.google.com/maps?q=${location.lat},${location.lng}`
+    : '';
+  const message = `🚨 EMERGENCY SOS from SafeGuard!\n${victimName} needs help!\nLocation: ${mapLink}`;
+
+  contacts.forEach(c => {
+    // Open SMS with pre-filled message for each contact
+    const smsUrl = `sms:${c.phone}?body=${encodeURIComponent(message)}`;
+    window.open(smsUrl, '_blank');
+  });
+
+  toast.success(`📱 Auto SOS sent to ${contacts.length} contact(s)`);
 };
 
 const UserDashboard = () => {
@@ -47,8 +60,8 @@ const UserDashboard = () => {
   const [locLoading, setLocLoading] = useState(false);
   const [sosActive, setSosActive] = useState(false);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [shakeEnabled, setShakeEnabled] = useState(true);
 
-  // Trusted contacts
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
   const [newContactName, setNewContactName] = useState('');
   const [newContactPhone, setNewContactPhone] = useState('');
@@ -85,18 +98,17 @@ const UserDashboard = () => {
     window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handleSOS = () => {
-    if (!victimName.trim()) { toast.error('Enter victim name'); return; }
-    if (!incidentType) { toast.error('Select incident type'); return; }
+  const triggerSOS = useCallback(() => {
+    const name = victimName.trim() || user?.name || 'Unknown';
+    const type = incidentType || 'Other';
 
-    // Play SOS alarm sound
     playSOSAlarm();
-    
     setSosActive(true);
+
     const incident: Incident = {
       id: crypto.randomUUID(),
-      victimName: victimName.trim(),
-      incidentType,
+      victimName: name,
+      incidentType: type,
       latitude: location?.lat || 28.6139,
       longitude: location?.lng || 77.2090,
       time: new Date().toISOString(),
@@ -105,12 +117,25 @@ const UserDashboard = () => {
       evidence: evidence.length > 0 ? evidence : undefined,
     };
     saveIncident(incident);
+
+    // Auto SOS to contacts
+    const currentContacts = user ? getContacts(user.email) : [];
+    sendAutoSOS(currentContacts, name, location);
+
     toast.success('🚨 SOS Alert Sent!');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
     setIncidentType('');
     setEvidence([]);
-  };
+  }, [victimName, incidentType, location, user, evidence]);
+
+  // Shake to trigger SOS
+  useShakeDetection(() => {
+    if (shakeEnabled) {
+      toast.warning('📳 Shake detected! Triggering SOS...');
+      triggerSOS();
+    }
+  });
 
   const handleAddContact = () => {
     if (!newContactName.trim() || !newContactPhone.trim()) { toast.error('Fill contact details'); return; }
@@ -194,10 +219,24 @@ const UserDashboard = () => {
             {/* Evidence Capture */}
             <EvidenceCapture evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
 
+            {/* Shake toggle */}
+            <div className="flex items-center justify-between rounded-lg bg-muted p-3">
+              <div className="flex items-center gap-2 text-sm">
+                <Smartphone className="h-4 w-4 text-primary" />
+                <span className="font-medium">Shake to trigger SOS</span>
+              </div>
+              <button
+                onClick={() => setShakeEnabled(!shakeEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${shakeEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+              >
+                <span className={`inline-block h-4 w-4 rounded-full bg-primary-foreground transition-transform ${shakeEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
             {/* SOS Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={handleSOS}
+              onClick={triggerSOS}
               className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : 'hover:emergency-glow'}`}
             >
               {sosActive ? '🚨 ALERT SENT!' : '🆘 SEND SOS'}
@@ -210,6 +249,7 @@ const UserDashboard = () => {
           <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
             <Phone className="h-5 w-5 text-primary" />
             Trusted Contacts
+            <span className="text-xs font-normal text-muted-foreground ml-1">(Auto-notified on SOS)</span>
           </h2>
 
           <div className="mb-4 flex gap-2">
