@@ -8,6 +8,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const AppHeader = () => {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <header className="border-b border-border bg-card">
