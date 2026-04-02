@@ -13,27 +13,15 @@ import { useShakeDetection } from '@/hooks/useShakeDetection';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
+let sirenAudio: HTMLAudioElement | null = null;
+
 const playSOSAlarm = () => {
   try {
-    const ctx = new AudioContext();
-    const playTone = (freq: number, start: number, duration: number) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = freq;
-      osc.type = 'square';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime + start);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + start + duration);
-      osc.start(ctx.currentTime + start);
-      osc.stop(ctx.currentTime + start + duration);
-    };
-    const short = 0.15, long = 0.4, gap = 0.1;
-    let t = 0;
-    for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
-    for (let i = 0; i < 3; i++) { playTone(880, t, long); t += long + gap; }
-    for (let i = 0; i < 3; i++) { playTone(880, t, short); t += short + gap; }
-    setTimeout(() => ctx.close(), (t + 1) * 1000);
+    if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; }
+    sirenAudio = new Audio('/siren.mp3');
+    sirenAudio.loop = false;
+    sirenAudio.play();
+    setTimeout(() => { if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; sirenAudio = null; } }, 15000);
   } catch {}
 };
 

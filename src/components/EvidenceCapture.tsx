@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Evidence } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { Camera, Video, Mic, Square, X, Image } from 'lucide-react';
+import { Camera, Video, Mic, Square, X, Image, SwitchCamera } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,16 +14,19 @@ interface EvidenceCaptureProps {
 const EvidenceCapture = ({ evidence, onAdd, onRemove }: EvidenceCaptureProps) => {
   const [activeMode, setActiveMode] = useState<'photo' | 'video' | 'audio' | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const startCamera = useCallback(async (mode: 'photo' | 'video') => {
+  const startCameraWithFacing = useCallback(async (mode: 'photo' | 'video', facing: 'environment' | 'user') => {
     try {
+      // Stop existing stream first
+      streamRef.current?.getTracks().forEach(t => t.stop());
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: 640, height: 480 },
+        video: { facingMode: facing, width: 640, height: 480 },
         audio: mode === 'video',
       });
       streamRef.current = stream;
@@ -36,6 +39,17 @@ const EvidenceCapture = ({ evidence, onAdd, onRemove }: EvidenceCaptureProps) =>
       toast.error('Camera access denied');
     }
   }, []);
+
+  const startCamera = useCallback(async (mode: 'photo' | 'video') => {
+    startCameraWithFacing(mode, facingMode);
+  }, [facingMode, startCameraWithFacing]);
+
+  const switchCamera = useCallback(() => {
+    if (!activeMode || activeMode === 'audio') return;
+    const newFacing = facingMode === 'environment' ? 'user' : 'environment';
+    setFacingMode(newFacing);
+    startCameraWithFacing(activeMode, newFacing);
+  }, [activeMode, facingMode, startCameraWithFacing]);
 
   const startAudio = useCallback(async () => {
     try {
@@ -121,7 +135,17 @@ const EvidenceCapture = ({ evidence, onAdd, onRemove }: EvidenceCaptureProps) =>
             className="rounded-lg border border-border bg-muted overflow-hidden"
           >
             {(activeMode === 'photo' || activeMode === 'video') && (
-              <video ref={videoRef} className="w-full rounded-t-lg" autoPlay muted playsInline />
+              <div className="relative">
+                <video ref={videoRef} className="w-full rounded-t-lg" autoPlay muted playsInline />
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="absolute top-2 right-2 h-8 w-8 rounded-full bg-background/70 backdrop-blur-sm"
+                  onClick={switchCamera}
+                >
+                  <SwitchCamera className="h-4 w-4" />
+                </Button>
+              </div>
             )}
             {activeMode === 'audio' && (
               <div className="flex items-center justify-center py-8">
