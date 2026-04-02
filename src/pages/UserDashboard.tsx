@@ -110,6 +110,7 @@ const UserDashboard = () => {
       id: crypto.randomUUID(),
       victimName: name,
       incidentType: type,
+      description: description.trim() || undefined,
       latitude: location?.lat || 28.6139,
       longitude: location?.lng || 77.2090,
       time: new Date().toISOString(),
