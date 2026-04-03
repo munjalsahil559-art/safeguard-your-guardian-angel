@@ -245,10 +245,10 @@ const UserDashboard = () => {
             {/* SOS Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={triggerSOS}
-              className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : 'hover:emergency-glow'}`}
+              onClick={handleSOSClick}
+              className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : sirenPlaying ? 'bg-destructive emergency-glow' : 'hover:emergency-glow'}`}
             >
-              {sosActive ? '🚨 ALERT SENT!' : '🆘 SEND SOS'}
+              {sosActive ? '🚨 ALERT SENT!' : sirenPlaying ? '🔇 TAP TO STOP SIREN' : '🆘 SEND SOS'}
             </motion.button>
           </div>
         </motion.div>
