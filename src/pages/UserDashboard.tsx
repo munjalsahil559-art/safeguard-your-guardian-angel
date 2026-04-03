@@ -19,10 +19,13 @@ const playSOSAlarm = () => {
   try {
     if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; }
     sirenAudio = new Audio('/siren.mp3');
-    sirenAudio.loop = false;
+    sirenAudio.loop = true;
     sirenAudio.play();
-    setTimeout(() => { if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; sirenAudio = null; } }, 15000);
   } catch {}
+};
+
+const stopSOSAlarm = () => {
+  if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; sirenAudio = null; }
 };
 
 const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: { lat: number; lng: number } | null) => {
@@ -49,6 +52,7 @@ const UserDashboard = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [sosActive, setSosActive] = useState(false);
+  const [sirenPlaying, setSirenPlaying] = useState(false);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [shakeEnabled, setShakeEnabled] = useState(true);
 
@@ -88,11 +92,20 @@ const UserDashboard = () => {
     window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank', 'noopener,noreferrer');
   };
 
-  const triggerSOS = useCallback(() => {
+  const handleSOSClick = useCallback(() => {
+    if (sirenPlaying) {
+      // Double-tap / second tap stops the siren
+      stopSOSAlarm();
+      setSirenPlaying(false);
+      toast.info('🔇 Siren stopped');
+      return;
+    }
+
     const name = victimName.trim() || user?.name || 'Unknown';
     const type = incidentType || 'Other';
 
     playSOSAlarm();
+    setSirenPlaying(true);
     setSosActive(true);
 
     const incident: Incident = {
@@ -109,23 +122,22 @@ const UserDashboard = () => {
     };
     saveIncident(incident);
 
-    // Auto SOS to contacts
     const currentContacts = user ? getContacts(user.email) : [];
     sendAutoSOS(currentContacts, name, location);
 
-    toast.success('🚨 SOS Alert Sent!');
+    toast.success('🚨 SOS Alert Sent! Tap again to stop siren.');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
     setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, description, incidentType, location, user, evidence]);
+  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying]);
 
   // Shake to trigger SOS
   useShakeDetection(() => {
     if (shakeEnabled) {
       toast.warning('📳 Shake detected! Triggering SOS...');
-      triggerSOS();
+      handleSOSClick();
     }
   });
 
@@ -233,10 +245,10 @@ const UserDashboard = () => {
             {/* SOS Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
-              onClick={triggerSOS}
-              className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : 'hover:emergency-glow'}`}
+              onClick={handleSOSClick}
+              className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : sirenPlaying ? 'bg-destructive emergency-glow' : 'hover:emergency-glow'}`}
             >
-              {sosActive ? '🚨 ALERT SENT!' : '🆘 SEND SOS'}
+              {sosActive ? '🚨 ALERT SENT!' : sirenPlaying ? '🔇 TAP TO STOP SIREN' : '🆘 SEND SOS'}
             </motion.button>
           </div>
         </motion.div>
