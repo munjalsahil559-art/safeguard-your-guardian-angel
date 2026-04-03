@@ -92,11 +92,20 @@ const UserDashboard = () => {
     window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank', 'noopener,noreferrer');
   };
 
-  const triggerSOS = useCallback(() => {
+  const handleSOSClick = useCallback(() => {
+    if (sirenPlaying) {
+      // Double-tap / second tap stops the siren
+      stopSOSAlarm();
+      setSirenPlaying(false);
+      toast.info('🔇 Siren stopped');
+      return;
+    }
+
     const name = victimName.trim() || user?.name || 'Unknown';
     const type = incidentType || 'Other';
 
     playSOSAlarm();
+    setSirenPlaying(true);
     setSosActive(true);
 
     const incident: Incident = {
@@ -113,11 +122,10 @@ const UserDashboard = () => {
     };
     saveIncident(incident);
 
-    // Auto SOS to contacts
     const currentContacts = user ? getContacts(user.email) : [];
     sendAutoSOS(currentContacts, name, location);
 
-    toast.success('🚨 SOS Alert Sent!');
+    toast.success('🚨 SOS Alert Sent! Tap again to stop siren.');
     setTimeout(() => setSosActive(false), 2000);
     setVictimName('');
     setDescription('');
