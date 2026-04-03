@@ -3,6 +3,7 @@ import { useAuth } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '@/components/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, LogOut, Trash2, Crown, Save } from 'lucide-react';
@@ -111,15 +112,15 @@ const AccountPage = () => {
           <div className="space-y-4">
             <div>
               <Label>Current Password</Label>
-              <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
+              <PasswordInput value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
             </div>
             <div>
               <Label>New Password</Label>
-              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
+              <PasswordInput value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
             </div>
             <div>
               <Label>Confirm New Password</Label>
-              <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
+              <PasswordInput value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
             </div>
             <Button onClick={handleChangePassword} variant="secondary">
               <Lock className="mr-2 h-4 w-4" /> Update Password
