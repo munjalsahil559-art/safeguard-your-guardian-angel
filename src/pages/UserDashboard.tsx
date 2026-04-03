@@ -137,7 +137,7 @@ const UserDashboard = () => {
   useShakeDetection(() => {
     if (shakeEnabled) {
       toast.warning('📳 Shake detected! Triggering SOS...');
-      triggerSOS();
+      handleSOSClick();
     }
   });
 
