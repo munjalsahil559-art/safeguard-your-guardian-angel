@@ -3,6 +3,7 @@ import { useAuth, UserRole } from '@/lib/auth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '@/components/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { Shield, AlertTriangle, Mail } from 'lucide-react';

@@ -3,6 +3,7 @@ import { useAuth } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import PasswordInput from '@/components/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { User, Mail, Lock, LogOut, Trash2, Crown, Save } from 'lucide-react';
