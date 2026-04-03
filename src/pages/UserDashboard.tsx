@@ -52,6 +52,7 @@ const UserDashboard = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locLoading, setLocLoading] = useState(false);
   const [sosActive, setSosActive] = useState(false);
+  const [sirenPlaying, setSirenPlaying] = useState(false);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [shakeEnabled, setShakeEnabled] = useState(true);
 
