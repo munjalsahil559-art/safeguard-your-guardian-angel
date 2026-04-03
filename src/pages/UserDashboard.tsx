@@ -19,10 +19,13 @@ const playSOSAlarm = () => {
   try {
     if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; }
     sirenAudio = new Audio('/siren.mp3');
-    sirenAudio.loop = false;
+    sirenAudio.loop = true;
     sirenAudio.play();
-    setTimeout(() => { if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; sirenAudio = null; } }, 15000);
   } catch {}
+};
+
+const stopSOSAlarm = () => {
+  if (sirenAudio) { sirenAudio.pause(); sirenAudio.currentTime = 0; sirenAudio = null; }
 };
 
 const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: { lat: number; lng: number } | null) => {
