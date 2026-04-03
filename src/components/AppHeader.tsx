@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth';
 import { useTheme } from '@/lib/theme';
-import { Shield, Moon, Sun, LogOut, History } from 'lucide-react';
+import { Shield, Moon, Sun, LogOut, History, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 
