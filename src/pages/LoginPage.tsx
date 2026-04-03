@@ -156,7 +156,7 @@ const LoginPage = () => {
                   </div>
                   <div>
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="mt-1" />
+                    <PasswordInput id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="mt-1" />
                   </div>
                   {!isLogin && (
                     <div>
