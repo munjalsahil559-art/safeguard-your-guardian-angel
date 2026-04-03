@@ -131,7 +131,7 @@ const UserDashboard = () => {
     setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, description, incidentType, location, user, evidence]);
+  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying]);
 
   // Shake to trigger SOS
   useShakeDetection(() => {
