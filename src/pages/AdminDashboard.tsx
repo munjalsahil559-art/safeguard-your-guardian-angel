@@ -230,8 +230,8 @@ const AdminDashboard = () => {
               <Eye className="mr-1 h-3 w-3" /> {showMap ? 'Hide' : 'Show'}
             </Button>
           </div>
-          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} onIncidentClick={handleMapIncidentClick} />}
-          {showMap && incidents.length === 0 && (
+          {showMap && activeIncidents.length > 0 && <IncidentMap incidents={activeIncidents} onIncidentClick={handleMapIncidentClick} />}
+          {showMap && activeIncidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
               No incidents to display on map
             </div>
