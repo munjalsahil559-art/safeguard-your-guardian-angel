@@ -129,6 +129,18 @@ const AdminDashboard = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  const handleArchive = (id: string) => {
+    updateIncident(id, { archived: true, sosActive: false });
+    setIncidents(getIncidents());
+    toast.success('Incident archived');
+  };
+
+  const handleRestore = (id: string) => {
+    updateIncident(id, { archived: false });
+    setIncidents(getIncidents());
+    toast.success('Incident restored');
+  };
+
   const generatePDF = (incident: Incident) => {
     const doc = new jsPDF();
     const detection = detectFakeScore(incident);
