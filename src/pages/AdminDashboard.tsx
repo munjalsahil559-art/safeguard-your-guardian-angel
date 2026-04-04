@@ -70,6 +70,7 @@ const AdminDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actionInputs, setActionInputs] = useState<Record<string, string>>({});
   const [showMap, setShowMap] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
   const [prevCount, setPrevCount] = useState(0);
   const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
