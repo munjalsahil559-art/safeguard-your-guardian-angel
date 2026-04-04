@@ -182,13 +182,14 @@ const AdminDashboard = () => {
       <AppHeader />
       <main className="container mx-auto max-w-3xl px-4 py-6 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Total', value: incidents.length, icon: Shield, color: 'text-foreground' },
+            { label: 'Total', value: activeIncidents.length, icon: Shield, color: 'text-foreground' },
             { label: 'Pending', value: pending.length, icon: Clock, color: 'text-warning' },
             { label: 'Resolved', value: resolved.length, icon: CheckCircle, color: 'text-success' },
+            { label: 'Archived', value: archivedIncidents.length, icon: Archive, color: 'text-muted-foreground' },
           ].map(stat => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center">
+            <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => stat.label === 'Archived' && setShowArchived(!showArchived)}>
               <stat.icon className={`mx-auto mb-1 h-5 w-5 ${stat.color}`} />
               <p className="text-2xl font-extrabold">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
