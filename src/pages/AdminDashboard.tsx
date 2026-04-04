@@ -64,44 +64,55 @@ const detectFakeScore = (incident: Incident): { score: number; label: string; re
   return { score, label, reasons };
 };
 
+let adminSiren: HTMLAudioElement | null = null;
+
 const AdminDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actionInputs, setActionInputs] = useState<Record<string, string>>({});
   const [showMap, setShowMap] = useState(true);
   const [prevCount, setPrevCount] = useState(0);
+  const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+
+  const stopAdminSiren = () => {
+    if (adminSiren) { adminSiren.pause(); adminSiren.currentTime = 0; adminSiren = null; }
+    setAdminSirenPlaying(false);
+  };
 
   useEffect(() => {
     const load = () => {
       const loaded = getIncidents();
+      const hasActiveSOS = loaded.some(i => i.sosActive);
+
+      // Play siren if any SOS is active
+      if (hasActiveSOS && !adminSirenPlaying) {
+        try {
+          adminSiren = new Audio('/siren.mp3');
+          adminSiren.loop = true;
+          adminSiren.play();
+          setAdminSirenPlaying(true);
+        } catch {}
+      } else if (!hasActiveSOS && adminSirenPlaying) {
+        stopAdminSiren();
+      }
+
       // Notify admin of new incidents
       if (loaded.length > prevCount && prevCount > 0) {
         const newOnes = loaded.slice(prevCount);
         newOnes.forEach(inc => {
           toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
         });
-        // Play notification sound
-        try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 660;
-          osc.type = 'sine';
-          gain.gain.setValueAtTime(0.3, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.5);
-          setTimeout(() => ctx.close(), 1000);
-        } catch {}
       }
       setPrevCount(loaded.length);
       setIncidents(loaded);
     };
     load();
-    const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
-  }, [prevCount]);
+    const interval = setInterval(load, 2000);
+    return () => {
+      clearInterval(interval);
+      stopAdminSiren();
+    };
+  }, [prevCount, adminSirenPlaying]);
 
   const handleResolve = (id: string) => {
     const action = actionInputs[id]?.trim();
