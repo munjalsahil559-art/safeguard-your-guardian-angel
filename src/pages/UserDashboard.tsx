@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth, saveIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
+import { useAuth, saveIncident, updateIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
 import EvidenceCapture from '@/components/EvidenceCapture';
 import { Button } from '@/components/ui/button';
@@ -94,9 +94,14 @@ const UserDashboard = () => {
 
   const handleSOSClick = useCallback(() => {
     if (sirenPlaying) {
-      // Double-tap / second tap stops the siren
       stopSOSAlarm();
       setSirenPlaying(false);
+      // Deactivate SOS on the incident
+      const activeId = localStorage.getItem('safeguard_active_sos');
+      if (activeId) {
+        updateIncident(activeId, { sosActive: false });
+        localStorage.removeItem('safeguard_active_sos');
+      }
       toast.info('🔇 Siren stopped');
       return;
     }
@@ -108,8 +113,9 @@ const UserDashboard = () => {
     setSirenPlaying(true);
     setSosActive(true);
 
+    const incidentId = crypto.randomUUID();
     const incident: Incident = {
-      id: crypto.randomUUID(),
+      id: incidentId,
       victimName: name,
       incidentType: type,
       description: description.trim() || undefined,
@@ -117,10 +123,14 @@ const UserDashboard = () => {
       longitude: location?.lng || 77.2090,
       time: new Date().toISOString(),
       status: 'pending',
+      sosActive: true,
       reportedBy: user?.email || '',
       evidence: evidence.length > 0 ? evidence : undefined,
     };
     saveIncident(incident);
+
+    // Store active SOS id so we can deactivate later
+    localStorage.setItem('safeguard_active_sos', incidentId);
 
     const currentContacts = user ? getContacts(user.email) : [];
     sendAutoSOS(currentContacts, name, location);

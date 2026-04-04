@@ -5,7 +5,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -64,51 +64,68 @@ const detectFakeScore = (incident: Incident): { score: number; label: string; re
   return { score, label, reasons };
 };
 
+let adminSiren: HTMLAudioElement | null = null;
+
 const AdminDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actionInputs, setActionInputs] = useState<Record<string, string>>({});
   const [showMap, setShowMap] = useState(true);
   const [prevCount, setPrevCount] = useState(0);
+  const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+
+  const stopAdminSiren = () => {
+    if (adminSiren) { adminSiren.pause(); adminSiren.currentTime = 0; adminSiren = null; }
+    setAdminSirenPlaying(false);
+  };
 
   useEffect(() => {
     const load = () => {
       const loaded = getIncidents();
+      const hasActiveSOS = loaded.some(i => i.sosActive);
+
+      // Play siren if any SOS is active
+      if (hasActiveSOS && !adminSirenPlaying) {
+        try {
+          adminSiren = new Audio('/siren.mp3');
+          adminSiren.loop = true;
+          adminSiren.play();
+          setAdminSirenPlaying(true);
+        } catch {}
+      } else if (!hasActiveSOS && adminSirenPlaying) {
+        stopAdminSiren();
+      }
+
       // Notify admin of new incidents
       if (loaded.length > prevCount && prevCount > 0) {
         const newOnes = loaded.slice(prevCount);
         newOnes.forEach(inc => {
           toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
         });
-        // Play notification sound
-        try {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.frequency.value = 660;
-          osc.type = 'sine';
-          gain.gain.setValueAtTime(0.3, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-          osc.start();
-          osc.stop(ctx.currentTime + 0.5);
-          setTimeout(() => ctx.close(), 1000);
-        } catch {}
       }
       setPrevCount(loaded.length);
       setIncidents(loaded);
     };
     load();
-    const interval = setInterval(load, 3000);
-    return () => clearInterval(interval);
-  }, [prevCount]);
+    const interval = setInterval(load, 2000);
+    return () => {
+      clearInterval(interval);
+      stopAdminSiren();
+    };
+  }, [prevCount, adminSirenPlaying]);
 
   const handleResolve = (id: string) => {
     const action = actionInputs[id]?.trim();
     if (!action) { toast.error('Select an action'); return; }
-    updateIncident(id, { status: 'resolved', actionTaken: action });
+    updateIncident(id, { status: 'resolved', actionTaken: action, sosActive: false });
     setIncidents(getIncidents());
     toast.success('Incident resolved');
+  };
+
+  const handleMapIncidentClick = (incident: Incident) => {
+    setSelectedIncident(incident);
+    const el = document.getElementById(`incident-${incident.id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const generatePDF = (incident: Incident) => {
@@ -164,6 +181,28 @@ const AdminDashboard = () => {
           ))}
         </div>
 
+        {/* Active SOS Siren Banner */}
+        {adminSirenPlaying && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-xl border-2 border-destructive bg-destructive/10 p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Volume2 className="h-6 w-6 text-destructive animate-pulse" />
+              <div>
+                <p className="font-bold text-destructive">🚨 Active SOS Alert!</p>
+                <p className="text-xs text-muted-foreground">
+                  {incidents.filter(i => i.sosActive).length} active emergency alert(s) — siren playing
+                </p>
+              </div>
+            </div>
+            <Button variant="destructive" size="sm" onClick={stopAdminSiren}>
+              <VolumeX className="mr-1 h-4 w-4" /> Mute Siren
+            </Button>
+          </motion.div>
+        )}
+
         {/* Map */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -175,7 +214,7 @@ const AdminDashboard = () => {
               <Eye className="mr-1 h-3 w-3" /> {showMap ? 'Hide' : 'Show'}
             </Button>
           </div>
-          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} />}
+          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} onIncidentClick={handleMapIncidentClick} />}
           {showMap && incidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
               No incidents to display on map
@@ -203,17 +242,29 @@ const AdminDashboard = () => {
               return (
                 <motion.div
                   key={incident.id}
+                  id={`incident-${incident.id}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="rounded-xl border border-border bg-card p-4"
+                  className={`rounded-xl border p-4 ${
+                    incident.sosActive
+                      ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/30 animate-pulse'
+                      : selectedIncident?.id === incident.id
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
+                      : 'border-border bg-card'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-bold">{incident.victimName}</p>
                       <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap justify-end">
+                      {incident.sosActive && (
+                        <span className="flex items-center gap-1 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground animate-pulse">
+                          🚨 ACTIVE SOS
+                        </span>
+                      )}
                       {/* Fake/Genuine badge */}
                       <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         detection.score >= 70
