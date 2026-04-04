@@ -378,6 +378,71 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+
+        {/* Archived Incidents */}
+        {showArchived && (
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+              <Archive className="h-5 w-5 text-muted-foreground" />
+              Archived Incidents
+              <span className="text-xs font-normal text-muted-foreground">({archivedIncidents.length})</span>
+            </h2>
+
+            {archivedIncidents.length === 0 && (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <Archive className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No archived incidents</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {archivedIncidents.map((incident, idx) => (
+                <motion.div
+                  key={incident.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="rounded-xl border border-dashed border-border bg-muted/30 p-4"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-bold">{incident.victimName}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        incident.status === 'resolved' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
+                      }`}>
+                        {incident.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div className="rounded-lg bg-muted p-2">
+                      <span className="text-xs text-muted-foreground">Type</span>
+                      <p className="font-medium">{incident.incidentType}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted p-2">
+                      <span className="text-xs text-muted-foreground">Reporter</span>
+                      <p className="font-mono text-xs">{incident.reportedBy}</p>
+                    </div>
+                  </div>
+                  {incident.actionTaken && (
+                    <p className="text-xs text-muted-foreground mb-3">✓ {incident.actionTaken}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => handleRestore(incident.id)}>
+                      <ArchiveRestore className="mr-1 h-3 w-3" /> Restore
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
+                      <FileText className="mr-1 h-3 w-3" /> PDF
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
