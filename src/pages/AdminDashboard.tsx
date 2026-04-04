@@ -354,15 +354,23 @@ const AdminDashboard = () => {
                       <Button onClick={() => handleResolve(incident.id)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
                         Resolve
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="rounded-lg bg-success/10 px-3 py-1.5 text-xs text-success">
                         ✓ {incident.actionTaken}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
-                        <FileText className="mr-1 h-3 w-3" /> PDF
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
+                          <FileText className="mr-1 h-3 w-3" /> PDF
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </motion.div>
