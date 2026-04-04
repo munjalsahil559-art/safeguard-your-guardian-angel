@@ -259,7 +259,12 @@ const AdminDashboard = () => {
                       <p className="font-bold">{incident.victimName}</p>
                       <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
                     </div>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap justify-end">
+                      {incident.sosActive && (
+                        <span className="flex items-center gap-1 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground animate-pulse">
+                          🚨 ACTIVE SOS
+                        </span>
+                      )}
                       {/* Fake/Genuine badge */}
                       <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         detection.score >= 70
