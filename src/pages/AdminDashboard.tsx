@@ -117,9 +117,15 @@ const AdminDashboard = () => {
   const handleResolve = (id: string) => {
     const action = actionInputs[id]?.trim();
     if (!action) { toast.error('Select an action'); return; }
-    updateIncident(id, { status: 'resolved', actionTaken: action });
+    updateIncident(id, { status: 'resolved', actionTaken: action, sosActive: false });
     setIncidents(getIncidents());
     toast.success('Incident resolved');
+  };
+
+  const handleMapIncidentClick = (incident: Incident) => {
+    setSelectedIncident(incident);
+    const el = document.getElementById(`incident-${incident.id}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   const generatePDF = (incident: Incident) => {
