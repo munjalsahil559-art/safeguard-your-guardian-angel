@@ -181,6 +181,28 @@ const AdminDashboard = () => {
           ))}
         </div>
 
+        {/* Active SOS Siren Banner */}
+        {adminSirenPlaying && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-xl border-2 border-destructive bg-destructive/10 p-4 flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Volume2 className="h-6 w-6 text-destructive animate-pulse" />
+              <div>
+                <p className="font-bold text-destructive">🚨 Active SOS Alert!</p>
+                <p className="text-xs text-muted-foreground">
+                  {incidents.filter(i => i.sosActive).length} active emergency alert(s) — siren playing
+                </p>
+              </div>
+            </div>
+            <Button variant="destructive" size="sm" onClick={stopAdminSiren}>
+              <VolumeX className="mr-1 h-4 w-4" /> Mute Siren
+            </Button>
+          </motion.div>
+        )}
+
         {/* Map */}
         <div>
           <div className="flex items-center justify-between mb-3">
@@ -192,7 +214,7 @@ const AdminDashboard = () => {
               <Eye className="mr-1 h-3 w-3" /> {showMap ? 'Hide' : 'Show'}
             </Button>
           </div>
-          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} />}
+          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} onIncidentClick={handleMapIncidentClick} />}
           {showMap && incidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
               No incidents to display on map
