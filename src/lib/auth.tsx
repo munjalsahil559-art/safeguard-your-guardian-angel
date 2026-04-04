@@ -24,6 +24,7 @@ export interface Incident {
   description?: string;
   status: 'pending' | 'resolved';
   sosActive?: boolean;
+  archived?: boolean;
   actionTaken?: string;
   reportedBy: string;
   evidence?: Evidence[];
