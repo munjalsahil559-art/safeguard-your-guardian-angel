@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth, saveIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
+import { useAuth, saveIncident, updateIncident, Incident, Evidence, getContacts, saveContact, removeContact, TrustedContact } from '@/lib/auth';
 import AppHeader from '@/components/AppHeader';
 import EvidenceCapture from '@/components/EvidenceCapture';
 import { Button } from '@/components/ui/button';
