@@ -5,7 +5,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -70,6 +70,7 @@ const AdminDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actionInputs, setActionInputs] = useState<Record<string, string>>({});
   const [showMap, setShowMap] = useState(true);
+  const [showArchived, setShowArchived] = useState(false);
   const [prevCount, setPrevCount] = useState(0);
   const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
@@ -128,6 +129,18 @@ const AdminDashboard = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
+  const handleArchive = (id: string) => {
+    updateIncident(id, { archived: true, sosActive: false });
+    setIncidents(getIncidents());
+    toast.success('Incident archived');
+  };
+
+  const handleRestore = (id: string) => {
+    updateIncident(id, { archived: false });
+    setIncidents(getIncidents());
+    toast.success('Incident restored');
+  };
+
   const generatePDF = (incident: Incident) => {
     const doc = new jsPDF();
     const detection = detectFakeScore(incident);
@@ -159,21 +172,24 @@ const AdminDashboard = () => {
     toast.success('PDF downloaded');
   };
 
-  const pending = incidents.filter(i => i.status === 'pending');
-  const resolved = incidents.filter(i => i.status === 'resolved');
+  const activeIncidents = incidents.filter(i => !i.archived);
+  const archivedIncidents = incidents.filter(i => i.archived);
+  const pending = activeIncidents.filter(i => i.status === 'pending');
+  const resolved = activeIncidents.filter(i => i.status === 'resolved');
 
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
       <main className="container mx-auto max-w-3xl px-4 py-6 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {[
-            { label: 'Total', value: incidents.length, icon: Shield, color: 'text-foreground' },
+            { label: 'Total', value: activeIncidents.length, icon: Shield, color: 'text-foreground' },
             { label: 'Pending', value: pending.length, icon: Clock, color: 'text-warning' },
             { label: 'Resolved', value: resolved.length, icon: CheckCircle, color: 'text-success' },
+            { label: 'Archived', value: archivedIncidents.length, icon: Archive, color: 'text-muted-foreground' },
           ].map(stat => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center">
+            <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => stat.label === 'Archived' && setShowArchived(!showArchived)}>
               <stat.icon className={`mx-auto mb-1 h-5 w-5 ${stat.color}`} />
               <p className="text-2xl font-extrabold">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -214,8 +230,8 @@ const AdminDashboard = () => {
               <Eye className="mr-1 h-3 w-3" /> {showMap ? 'Hide' : 'Show'}
             </Button>
           </div>
-          {showMap && incidents.length > 0 && <IncidentMap incidents={incidents} onIncidentClick={handleMapIncidentClick} />}
-          {showMap && incidents.length === 0 && (
+          {showMap && activeIncidents.length > 0 && <IncidentMap incidents={activeIncidents} onIncidentClick={handleMapIncidentClick} />}
+          {showMap && activeIncidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
               No incidents to display on map
             </div>
@@ -226,18 +242,18 @@ const AdminDashboard = () => {
         <div>
           <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
             <AlertTriangle className="h-5 w-5 text-primary" />
-            All Incidents
+            Active Incidents
           </h2>
 
-          {incidents.length === 0 && (
+          {activeIncidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <Shield className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="text-muted-foreground">No incidents reported yet</p>
+              <p className="text-muted-foreground">No active incidents</p>
             </div>
           )}
 
           <div className="space-y-3">
-            {incidents.map((incident, idx) => {
+            {activeIncidents.map((incident, idx) => {
               const detection = detectFakeScore(incident);
               return (
                 <motion.div
@@ -338,15 +354,23 @@ const AdminDashboard = () => {
                       <Button onClick={() => handleResolve(incident.id)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
                         Resolve
                       </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="rounded-lg bg-success/10 px-3 py-1.5 text-xs text-success">
                         ✓ {incident.actionTaken}
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
-                        <FileText className="mr-1 h-3 w-3" /> PDF
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
+                          <FileText className="mr-1 h-3 w-3" /> PDF
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </motion.div>
@@ -354,6 +378,71 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+
+        {/* Archived Incidents */}
+        {showArchived && (
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+              <Archive className="h-5 w-5 text-muted-foreground" />
+              Archived Incidents
+              <span className="text-xs font-normal text-muted-foreground">({archivedIncidents.length})</span>
+            </h2>
+
+            {archivedIncidents.length === 0 && (
+              <div className="rounded-xl border border-border bg-card p-6 text-center">
+                <Archive className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No archived incidents</p>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {archivedIncidents.map((incident, idx) => (
+                <motion.div
+                  key={incident.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="rounded-xl border border-dashed border-border bg-muted/30 p-4"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="font-bold">{incident.victimName}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        incident.status === 'resolved' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
+                      }`}>
+                        {incident.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div className="rounded-lg bg-muted p-2">
+                      <span className="text-xs text-muted-foreground">Type</span>
+                      <p className="font-medium">{incident.incidentType}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted p-2">
+                      <span className="text-xs text-muted-foreground">Reporter</span>
+                      <p className="font-mono text-xs">{incident.reportedBy}</p>
+                    </div>
+                  </div>
+                  {incident.actionTaken && (
+                    <p className="text-xs text-muted-foreground mb-3">✓ {incident.actionTaken}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="text-xs" onClick={() => handleRestore(incident.id)}>
+                      <ArchiveRestore className="mr-1 h-3 w-3" /> Restore
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
+                      <FileText className="mr-1 h-3 w-3" /> PDF
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
