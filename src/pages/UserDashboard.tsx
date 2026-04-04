@@ -108,8 +108,9 @@ const UserDashboard = () => {
     setSirenPlaying(true);
     setSosActive(true);
 
+    const incidentId = crypto.randomUUID();
     const incident: Incident = {
-      id: crypto.randomUUID(),
+      id: incidentId,
       victimName: name,
       incidentType: type,
       description: description.trim() || undefined,
@@ -117,10 +118,14 @@ const UserDashboard = () => {
       longitude: location?.lng || 77.2090,
       time: new Date().toISOString(),
       status: 'pending',
+      sosActive: true,
       reportedBy: user?.email || '',
       evidence: evidence.length > 0 ? evidence : undefined,
     };
     saveIncident(incident);
+
+    // Store active SOS id so we can deactivate later
+    localStorage.setItem('safeguard_active_sos', incidentId);
 
     const currentContacts = user ? getContacts(user.email) : [];
     sendAutoSOS(currentContacts, name, location);
