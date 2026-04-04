@@ -94,9 +94,14 @@ const UserDashboard = () => {
 
   const handleSOSClick = useCallback(() => {
     if (sirenPlaying) {
-      // Double-tap / second tap stops the siren
       stopSOSAlarm();
       setSirenPlaying(false);
+      // Deactivate SOS on the incident
+      const activeId = localStorage.getItem('safeguard_active_sos');
+      if (activeId) {
+        updateIncident(activeId, { sosActive: false });
+        localStorage.removeItem('safeguard_active_sos');
+      }
       toast.info('🔇 Siren stopped');
       return;
     }
