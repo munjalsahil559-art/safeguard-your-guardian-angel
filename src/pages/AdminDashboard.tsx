@@ -242,10 +242,17 @@ const AdminDashboard = () => {
               return (
                 <motion.div
                   key={incident.id}
+                  id={`incident-${incident.id}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="rounded-xl border border-border bg-card p-4"
+                  className={`rounded-xl border p-4 ${
+                    incident.sosActive
+                      ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/30 animate-pulse'
+                      : selectedIncident?.id === incident.id
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
+                      : 'border-border bg-card'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
