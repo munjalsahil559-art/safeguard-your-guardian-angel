@@ -160,8 +160,10 @@ const AdminDashboard = () => {
     toast.success('PDF downloaded');
   };
 
-  const pending = incidents.filter(i => i.status === 'pending');
-  const resolved = incidents.filter(i => i.status === 'resolved');
+  const activeIncidents = incidents.filter(i => !i.archived);
+  const archivedIncidents = incidents.filter(i => i.archived);
+  const pending = activeIncidents.filter(i => i.status === 'pending');
+  const resolved = activeIncidents.filter(i => i.status === 'resolved');
 
   return (
     <div className="min-h-screen bg-background">
