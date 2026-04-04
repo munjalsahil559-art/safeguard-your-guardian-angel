@@ -242,18 +242,18 @@ const AdminDashboard = () => {
         <div>
           <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
             <AlertTriangle className="h-5 w-5 text-primary" />
-            All Incidents
+            Active Incidents
           </h2>
 
-          {incidents.length === 0 && (
+          {activeIncidents.length === 0 && (
             <div className="rounded-xl border border-border bg-card p-8 text-center">
               <Shield className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="text-muted-foreground">No incidents reported yet</p>
+              <p className="text-muted-foreground">No active incidents</p>
             </div>
           )}
 
           <div className="space-y-3">
-            {incidents.map((incident, idx) => {
+            {activeIncidents.map((incident, idx) => {
               const detection = detectFakeScore(incident);
               return (
                 <motion.div
