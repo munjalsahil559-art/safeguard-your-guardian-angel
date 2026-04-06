@@ -27,38 +27,13 @@ const ACTION_OPTIONS = [
   'Victim rescued successfully',
 ];
 
-// Simple fake/genuine detection heuristic
 const detectFakeScore = (incident: Incident): { score: number; label: string; reasons: string[] } => {
   const reasons: string[] = [];
-  let score = 70; // start at 70% genuine
-
-  // Default location = likely fake
-  if (incident.latitude === 28.6139 && incident.longitude === 77.2090) {
-    score -= 25;
-    reasons.push('Default location detected');
-  }
-
-  // Has evidence = more genuine
-  if (incident.evidence && incident.evidence.length > 0) {
-    score += 15;
-    reasons.push(`${incident.evidence.length} evidence item(s) attached`);
-  } else {
-    score -= 10;
-    reasons.push('No evidence provided');
-  }
-
-  // Victim name matches reporter = more genuine (self-report)
-  if (incident.victimName.toLowerCase().includes(incident.reportedBy.split('@')[0].toLowerCase())) {
-    score += 5;
-    reasons.push('Self-reported incident');
-  }
-
-  // Medical/Harassment more likely genuine
-  if (incident.incidentType === 'Medical' || incident.incidentType === 'Harassment') {
-    score += 5;
-    reasons.push('High-priority incident type');
-  }
-
+  let score = 70;
+  if (incident.latitude === 28.6139 && incident.longitude === 77.2090) { score -= 25; reasons.push('Default location detected'); }
+  if (incident.evidence && incident.evidence.length > 0) { score += 15; reasons.push(`${incident.evidence.length} evidence item(s) attached`); }
+  else { score -= 10; reasons.push('No evidence provided'); }
+  if (incident.incidentType === 'Medical' || incident.incidentType === 'Harassment') { score += 5; reasons.push('High-priority incident type'); }
   score = Math.max(10, Math.min(100, score));
   const label = score >= 70 ? 'Likely Genuine' : score >= 45 ? 'Needs Verification' : 'Possibly Fake';
   return { score, label, reasons };
@@ -81,11 +56,10 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    const load = () => {
-      const loaded = getIncidents();
+    const load = async () => {
+      const loaded = await getIncidents();
       const hasActiveSOS = loaded.some(i => i.sosActive);
 
-      // Play siren if any SOS is active
       if (hasActiveSOS && !adminSirenPlaying) {
         try {
           adminSiren = new Audio('/siren.mp3');
@@ -97,9 +71,8 @@ const AdminDashboard = () => {
         stopAdminSiren();
       }
 
-      // Notify admin of new incidents
       if (loaded.length > prevCount && prevCount > 0) {
-        const newOnes = loaded.slice(prevCount);
+        const newOnes = loaded.slice(0, loaded.length - prevCount);
         newOnes.forEach(inc => {
           toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
         });
@@ -108,18 +81,18 @@ const AdminDashboard = () => {
       setIncidents(loaded);
     };
     load();
-    const interval = setInterval(load, 2000);
+    const interval = setInterval(load, 3000);
     return () => {
       clearInterval(interval);
       stopAdminSiren();
     };
   }, [prevCount, adminSirenPlaying]);
 
-  const handleResolve = (id: string) => {
+  const handleResolve = async (id: string) => {
     const action = actionInputs[id]?.trim();
     if (!action) { toast.error('Select an action'); return; }
-    updateIncident(id, { status: 'resolved', actionTaken: action, sosActive: false });
-    setIncidents(getIncidents());
+    await updateIncident(id, { status: 'resolved', actionTaken: action, sosActive: false });
+    setIncidents(await getIncidents());
     toast.success('Incident resolved');
   };
 
@@ -129,15 +102,15 @@ const AdminDashboard = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
-  const handleArchive = (id: string) => {
-    updateIncident(id, { archived: true, sosActive: false });
-    setIncidents(getIncidents());
+  const handleArchive = async (id: string) => {
+    await updateIncident(id, { archived: true, sosActive: false });
+    setIncidents(await getIncidents());
     toast.success('Incident archived');
   };
 
-  const handleRestore = (id: string) => {
-    updateIncident(id, { archived: false });
-    setIncidents(getIncidents());
+  const handleRestore = async (id: string) => {
+    await updateIncident(id, { archived: false });
+    setIncidents(await getIncidents());
     toast.success('Incident restored');
   };
 
@@ -281,7 +254,6 @@ const AdminDashboard = () => {
                           🚨 ACTIVE SOS
                         </span>
                       )}
-                      {/* Fake/Genuine badge */}
                       <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         detection.score >= 70
                           ? 'bg-success/15 text-success'
@@ -302,7 +274,6 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Detection reasons */}
                   <div className="mb-3 flex flex-wrap gap-1">
                     {detection.reasons.map((r, i) => (
                       <span key={i} className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{r}</span>
@@ -328,7 +299,6 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* Evidence viewer */}
                   {incident.evidence && incident.evidence.length > 0 && (
                     <div className="mb-3">
                       <span className="text-xs font-semibold text-muted-foreground">Evidence ({incident.evidence.length})</span>
@@ -406,38 +376,21 @@ const AdminDashboard = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-bold">{incident.victimName}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
+                      <p className="font-semibold">{incident.victimName}</p>
+                      <p className="text-xs text-muted-foreground">{incident.incidentType} • {new Date(incident.time).toLocaleString()}</p>
                     </div>
-                    <div className="flex gap-1.5">
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        incident.status === 'resolved' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
-                      }`}>
-                        {incident.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div className="rounded-lg bg-muted p-2">
-                      <span className="text-xs text-muted-foreground">Type</span>
-                      <p className="font-medium">{incident.incidentType}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted p-2">
-                      <span className="text-xs text-muted-foreground">Reporter</span>
-                      <p className="font-mono text-xs">{incident.reportedBy}</p>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleRestore(incident.id)}>
+                        <ArchiveRestore className="mr-1 h-3 w-3" /> Restore
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generatePDF(incident)}>
+                        <FileText className="mr-1 h-3 w-3" /> PDF
+                      </Button>
                     </div>
                   </div>
                   {incident.actionTaken && (
-                    <p className="text-xs text-muted-foreground mb-3">✓ {incident.actionTaken}</p>
+                    <p className="text-xs text-muted-foreground">Action: {incident.actionTaken}</p>
                   )}
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="text-xs" onClick={() => handleRestore(incident.id)}>
-                      <ArchiveRestore className="mr-1 h-3 w-3" /> Restore
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
-                      <FileText className="mr-1 h-3 w-3" /> PDF
-                    </Button>
-                  </div>
                 </motion.div>
               ))}
             </div>
