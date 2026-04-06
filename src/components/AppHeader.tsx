@@ -60,7 +60,7 @@ const AppHeader = () => {
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
           {user && (
-            <Button variant="ghost" size="icon" onClick={logout} className="h-9 w-9">
+            <Button variant="ghost" size="icon" onClick={() => logout()} className="h-9 w-9">
               <LogOut className="h-4 w-4" />
             </Button>
           )}
