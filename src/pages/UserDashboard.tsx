@@ -36,7 +36,6 @@ const sendAutoSOS = (contacts: TrustedContact[], victimName: string, location: {
   const message = `🚨 EMERGENCY SOS from SafeGuard!\n${victimName} needs help!\nLocation: ${mapLink}`;
 
   contacts.forEach(c => {
-    // Open SMS with pre-filled message for each contact
     const smsUrl = `sms:${c.phone}?body=${encodeURIComponent(message)}`;
     window.open(smsUrl, '_blank');
   });
@@ -61,7 +60,9 @@ const UserDashboard = () => {
   const [newContactPhone, setNewContactPhone] = useState('');
 
   useEffect(() => {
-    if (user) setContacts(getContacts(user.email));
+    if (user) {
+      getContacts(user.id).then(setContacts);
+    }
   }, [user]);
 
   const getLocation = useCallback(() => {
@@ -92,14 +93,13 @@ const UserDashboard = () => {
     window.open(`https://www.google.com/maps?q=${location.lat},${location.lng}`, '_blank', 'noopener,noreferrer');
   };
 
-  const handleSOSClick = useCallback(() => {
+  const handleSOSClick = useCallback(async () => {
     if (sirenPlaying) {
       stopSOSAlarm();
       setSirenPlaying(false);
-      // Deactivate SOS on the incident
       const activeId = localStorage.getItem('safeguard_active_sos');
       if (activeId) {
-        updateIncident(activeId, { sosActive: false });
+        await updateIncident(activeId, { sosActive: false });
         localStorage.removeItem('safeguard_active_sos');
       }
       toast.info('🔇 Siren stopped');
@@ -124,15 +124,14 @@ const UserDashboard = () => {
       time: new Date().toISOString(),
       status: 'pending',
       sosActive: true,
-      reportedBy: user?.email || '',
+      reportedBy: user?.id || '',
       evidence: evidence.length > 0 ? evidence : undefined,
     };
-    saveIncident(incident);
+    await saveIncident(incident);
 
-    // Store active SOS id so we can deactivate later
     localStorage.setItem('safeguard_active_sos', incidentId);
 
-    const currentContacts = user ? getContacts(user.email) : [];
+    const currentContacts = user ? await getContacts(user.id) : [];
     sendAutoSOS(currentContacts, name, location);
 
     toast.success('🚨 SOS Alert Sent! Tap again to stop siren.');
@@ -143,7 +142,6 @@ const UserDashboard = () => {
     setEvidence([]);
   }, [victimName, description, incidentType, location, user, evidence, sirenPlaying]);
 
-  // Shake to trigger SOS
   useShakeDetection(() => {
     if (shakeEnabled) {
       toast.warning('📳 Shake detected! Triggering SOS...');
@@ -151,18 +149,18 @@ const UserDashboard = () => {
     }
   });
 
-  const handleAddContact = () => {
+  const handleAddContact = async () => {
     if (!newContactName.trim() || !newContactPhone.trim()) { toast.error('Fill contact details'); return; }
     const contact: TrustedContact = { id: crypto.randomUUID(), name: newContactName.trim(), phone: newContactPhone.trim() };
-    saveContact(user!.email, contact);
+    await saveContact(user!.id, contact);
     setContacts(prev => [...prev, contact]);
     setNewContactName('');
     setNewContactPhone('');
     toast.success('Contact added');
   };
 
-  const handleRemoveContact = (id: string) => {
-    removeContact(user!.email, id);
+  const handleRemoveContact = async (id: string) => {
+    await removeContact(user!.id, id);
     setContacts(prev => prev.filter(c => c.id !== id));
   };
 

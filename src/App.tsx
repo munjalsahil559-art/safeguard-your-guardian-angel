@@ -10,18 +10,21 @@ import AdminDashboard from "./pages/AdminDashboard";
 import UserHistory from "./pages/UserHistory";
 import AccountPage from "./pages/AccountPage";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role?: string }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!user) return <Navigate to="/" replace />;
   if (role && user.role !== role) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
   return <>{children}</>;
 };

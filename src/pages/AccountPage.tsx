@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 import AppHeader from '@/components/AppHeader';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,63 +16,50 @@ const AccountPage = () => {
   const navigate = useNavigate();
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const handleUpdateProfile = () => {
+  const handleUpdateProfile = async () => {
     if (!name.trim()) { toast.error('Name cannot be empty'); return; }
-    if (!email.trim()) { toast.error('Email cannot be empty'); return; }
-
-    const users = JSON.parse(localStorage.getItem('safeguard_users') || '[]');
-    const idx = users.findIndex((u: any) => u.email === user?.email);
-    if (idx === -1) { toast.error('User not found'); return; }
-
-    // Check if new email is taken by another user
-    if (email !== user?.email && users.find((u: any, i: number) => i !== idx && u.email === email)) {
-      toast.error('Email already taken'); return;
-    }
-
-    users[idx].name = name.trim();
-    users[idx].email = email.trim();
-    localStorage.setItem('safeguard_users', JSON.stringify(users));
-
-    // Update session
-    const session = { email: email.trim(), role: user!.role, name: name.trim() };
-    localStorage.setItem('safeguard_session', JSON.stringify(session));
     
-    toast.success('Profile updated! Please re-login for changes to take effect.');
+    const { error } = await supabase
+      .from('profiles')
+      .update({ name: name.trim(), email: email.trim() })
+      .eq('user_id', user!.id);
+    
+    if (error) { toast.error('Failed to update profile'); return; }
+
+    // Update email in auth if changed
+    if (email !== user?.email) {
+      const { error: authError } = await supabase.auth.updateUser({ email: email.trim() });
+      if (authError) { toast.error(authError.message); return; }
+      toast.success('Verification email sent to new address');
+    } else {
+      toast.success('Profile updated!');
+    }
   };
 
-  const handleChangePassword = () => {
-    if (!currentPassword) { toast.error('Enter current password'); return; }
+  const handleChangePassword = async () => {
     if (!newPassword || newPassword.length < 6) { toast.error('New password must be at least 6 characters'); return; }
     if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return; }
 
-    const users = JSON.parse(localStorage.getItem('safeguard_users') || '[]');
-    const idx = users.findIndex((u: any) => u.email === user?.email);
-    if (idx === -1 || users[idx].password !== currentPassword) {
-      toast.error('Current password is incorrect'); return;
-    }
-
-    users[idx].password = newPassword;
-    localStorage.setItem('safeguard_users', JSON.stringify(users));
-    setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) { toast.error(error.message); return; }
+    setNewPassword(''); setConfirmPassword('');
     toast.success('Password changed successfully');
   };
 
-  const handleDeleteAccount = () => {
-    const users = JSON.parse(localStorage.getItem('safeguard_users') || '[]');
-    const filtered = users.filter((u: any) => u.email !== user?.email);
-    localStorage.setItem('safeguard_users', JSON.stringify(filtered));
-    localStorage.removeItem(`safeguard_contacts_${user?.email}`);
-    logout();
-    toast.success('Account deleted');
+  const handleDeleteAccount = async () => {
+    // Delete profile data — the cascade on auth.users will clean up
+    await supabase.from('trusted_contacts').delete().eq('user_id', user!.id);
+    await supabase.from('profiles').delete().eq('user_id', user!.id);
+    await logout();
+    toast.success('Account data deleted. Contact support for full removal.');
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/');
   };
 
@@ -110,10 +98,6 @@ const AccountPage = () => {
             Change Password
           </h2>
           <div className="space-y-4">
-            <div>
-              <Label>Current Password</Label>
-              <PasswordInput value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1" placeholder="••••••••" />
-            </div>
             <div>
               <Label>New Password</Label>
               <PasswordInput value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1" placeholder="••••••••" />

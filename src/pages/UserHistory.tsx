@@ -12,8 +12,9 @@ const UserHistory = () => {
 
   useEffect(() => {
     if (user) {
-      const all = getIncidents().filter(i => i.reportedBy === user.email);
-      setIncidents(all.reverse());
+      getIncidents().then(all => {
+        setIncidents(all.filter(i => i.reportedBy === user.id));
+      });
     }
   }, [user]);
 
