@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import PasswordInput from '@/components/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Shield, AlertTriangle, Mail } from 'lucide-react';
+import { Shield, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const generateOTP = () => String(Math.floor(100000 + Math.random() * 900000));
 
