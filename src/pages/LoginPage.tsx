@@ -27,6 +27,22 @@ const LoginPage = () => {
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [enteredOtp, setEnteredOtp] = useState('');
 
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) toast.error(error.message);
+  };
+
+  const handleAppleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) toast.error(error.message);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isLogin) {
