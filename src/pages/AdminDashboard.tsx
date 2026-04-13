@@ -5,7 +5,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -118,9 +118,9 @@ const AdminDashboard = () => {
     const doc = new jsPDF();
     const detection = detectFakeScore(incident);
     doc.setFontSize(20);
-    doc.setTextColor(220, 50, 50);
+    doc.setTextColor(255, 60, 0);
     doc.text('SafeGuard - Incident Report', 20, 25);
-    doc.setDrawColor(220, 50, 50);
+    doc.setDrawColor(255, 60, 0);
     doc.line(20, 30, 190, 30);
     doc.setFontSize(12);
     doc.setTextColor(40, 40, 40);
@@ -151,251 +151,323 @@ const AdminDashboard = () => {
   const resolved = activeIncidents.filter(i => i.status === 'resolved');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
-      <main className="container mx-auto max-w-3xl px-4 py-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-3">
+      <main className="flex-1 flex flex-col">
+        {/* Stats Bar */}
+        <div className="grid grid-cols-4 border-b border-border">
           {[
-            { label: 'Total', value: activeIncidents.length, icon: Shield, color: 'text-foreground' },
-            { label: 'Pending', value: pending.length, icon: Clock, color: 'text-warning' },
-            { label: 'Resolved', value: resolved.length, icon: CheckCircle, color: 'text-success' },
-            { label: 'Archived', value: archivedIncidents.length, icon: Archive, color: 'text-muted-foreground' },
-          ].map(stat => (
-            <div key={stat.label} className="rounded-xl border border-border bg-card p-4 text-center cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => stat.label === 'Archived' && setShowArchived(!showArchived)}>
-              <stat.icon className={`mx-auto mb-1 h-5 w-5 ${stat.color}`} />
-              <p className="text-2xl font-extrabold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            { label: 'Total', value: activeIncidents.length, color: '' },
+            { label: 'Pending', value: pending.length, color: 'text-primary' },
+            { label: 'Resolved', value: resolved.length, color: 'text-accent' },
+            { label: 'Archived', value: archivedIncidents.length, color: 'text-muted-foreground', clickable: true },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className={`p-6 ${i < 3 ? 'border-r border-border' : ''} ${stat.clickable ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+              onClick={() => stat.clickable && setShowArchived(!showArchived)}
+            >
+              <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1 tracking-widest">
+                {stat.label}
+              </p>
+              <p className={`text-3xl font-bold font-mono tracking-tighter ${stat.color}`}>
+                {String(stat.value).padStart(2, '0')}
+              </p>
             </div>
           ))}
         </div>
 
-        {/* Active SOS Siren Banner */}
+        {/* SOS Alert Banner */}
         {adminSirenPlaying && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="rounded-xl border-2 border-destructive bg-destructive/10 p-4 flex items-center justify-between"
-          >
+          <div className="border-b border-primary bg-primary/5 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Volume2 className="h-6 w-6 text-destructive animate-pulse" />
+              <Volume2 className="h-5 w-5 text-primary animate-pulse" />
               <div>
-                <p className="font-bold text-destructive">🚨 Active SOS Alert!</p>
-                <p className="text-xs text-muted-foreground">
-                  {incidents.filter(i => i.sosActive).length} active emergency alert(s) — siren playing
+                <p className="font-bold text-primary font-mono text-sm uppercase">Active SOS Alert</p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  {incidents.filter(i => i.sosActive).length} active emergency alert(s)
                 </p>
               </div>
             </div>
-            <Button variant="destructive" size="sm" onClick={stopAdminSiren}>
-              <VolumeX className="mr-1 h-4 w-4" /> Mute Siren
-            </Button>
-          </motion.div>
+            <button
+              onClick={stopAdminSiren}
+              className="px-3 py-1.5 bg-primary text-primary-foreground font-mono text-[10px] uppercase tracking-widest font-bold hover:bg-primary/80 transition-colors"
+            >
+              <VolumeX className="mr-1 h-3 w-3 inline" /> Mute
+            </button>
+          </div>
         )}
 
-        {/* Map */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <Map className="h-5 w-5 text-primary" />
-              Live Incident Map
-            </h2>
-            <Button variant="ghost" size="sm" onClick={() => setShowMap(!showMap)} className="text-xs">
-              <Eye className="mr-1 h-3 w-3" /> {showMap ? 'Hide' : 'Show'}
-            </Button>
-          </div>
-          {showMap && activeIncidents.length > 0 && <IncidentMap incidents={activeIncidents} onIncidentClick={handleMapIncidentClick} />}
-          {showMap && activeIncidents.length === 0 && (
-            <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-muted-foreground">
-              No incidents to display on map
+        {/* Main Content */}
+        <div className="flex-1 grid grid-cols-12 overflow-hidden">
+          {/* Left: Incident List */}
+          <aside className="col-span-4 xl:col-span-3 border-r border-border overflow-y-auto flex flex-col">
+            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+              <span className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Active Incidents
+              </span>
+              {pending.length > 0 && (
+                <span className="px-2 py-0.5 bg-primary/10 text-primary font-mono text-[10px] border border-primary/20">
+                  {pending.length} PENDING
+                </span>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Incidents */}
-        <div>
-          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
-            <AlertTriangle className="h-5 w-5 text-primary" />
-            Active Incidents
-          </h2>
+            {activeIncidents.length === 0 && (
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-muted-foreground">
+                <Shield className="h-8 w-8 mb-2 opacity-30" />
+                <p className="font-mono text-xs uppercase">No active incidents</p>
+              </div>
+            )}
 
-          {activeIncidents.length === 0 && (
-            <div className="rounded-xl border border-border bg-card p-8 text-center">
-              <Shield className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-              <p className="text-muted-foreground">No active incidents</p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {activeIncidents.map((incident, idx) => {
-              const detection = detectFakeScore(incident);
-              return (
-                <motion.div
-                  key={incident.id}
-                  id={`incident-${incident.id}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className={`rounded-xl border p-4 ${
-                    incident.sosActive
-                      ? 'border-destructive bg-destructive/5 ring-2 ring-destructive/30 animate-pulse'
-                      : selectedIncident?.id === incident.id
-                      ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
-                      : 'border-border bg-card'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-bold">{incident.victimName}</p>
-                      <p className="text-xs text-muted-foreground">{new Date(incident.time).toLocaleString()}</p>
-                    </div>
-                    <div className="flex gap-1.5 flex-wrap justify-end">
-                      {incident.sosActive && (
-                        <span className="flex items-center gap-1 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground animate-pulse">
-                          🚨 ACTIVE SOS
-                        </span>
-                      )}
-                      <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        detection.score >= 70
-                          ? 'bg-success/15 text-success'
-                          : detection.score >= 45
-                          ? 'bg-warning/15 text-warning'
-                          : 'bg-destructive/15 text-destructive'
+            <div className="flex-1 divide-y divide-border">
+              {activeIncidents.map((incident, idx) => {
+                const detection = detectFakeScore(incident);
+                const isSelected = selectedIncident?.id === incident.id;
+                return (
+                  <motion.div
+                    key={incident.id}
+                    id={`incident-${incident.id}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: idx * 0.03 }}
+                    onClick={() => setSelectedIncident(incident)}
+                    className={`p-4 cursor-pointer transition-colors ${
+                      incident.sosActive
+                        ? 'bg-primary/5 border-l-2 border-l-primary'
+                        : isSelected
+                        ? 'bg-muted/50 border-l-2 border-l-accent'
+                        : 'hover:bg-muted/30 border-l-2 border-l-transparent'
+                    }`}
+                  >
+                    <div className="flex justify-between mb-2">
+                      <span className={`font-mono text-[10px] uppercase ${
+                        incident.sosActive ? 'text-primary' : incident.status === 'resolved' ? 'text-accent' : 'text-muted-foreground'
                       }`}>
-                        {detection.score >= 70 ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
+                        {incident.sosActive ? 'SOS_ACTIVE' : incident.status === 'resolved' ? 'RESOLVED' : 'PENDING'}
+                      </span>
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {new Date(incident.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-medium mb-1 uppercase tracking-tight">{incident.victimName}</h3>
+                    <p className="text-xs text-muted-foreground mb-2">{incident.incidentType} — {incident.description || 'No description'}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 font-mono text-[9px] uppercase border ${
+                        detection.score >= 70 ? 'border-accent/30 text-accent' : detection.score >= 45 ? 'border-primary/30 text-primary' : 'border-destructive/30 text-destructive'
+                      }`}>
                         {detection.label}
                       </span>
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                        incident.status === 'resolved'
-                          ? 'bg-success/15 text-success'
-                          : 'bg-warning/15 text-warning'
-                      }`}>
-                        {incident.status}
-                      </span>
+                      {incident.evidence && incident.evidence.length > 0 && (
+                        <span className="px-2 py-0.5 bg-muted font-mono text-[9px] text-muted-foreground uppercase">
+                          {incident.evidence.length} Evidence
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </aside>
+
+          {/* Right: Map + Detail */}
+          <div className="col-span-8 xl:col-span-9 flex flex-col bg-background overflow-y-auto">
+            {/* Map */}
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                    Live Feed // Incident Map
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowMap(!showMap)}
+                  className="font-mono text-[10px] text-muted-foreground uppercase hover:text-foreground transition-colors"
+                >
+                  {showMap ? 'Hide Map' : 'Show Map'}
+                </button>
+              </div>
+              {showMap && activeIncidents.length > 0 && (
+                <div className="basalt-slab overflow-hidden">
+                  <IncidentMap incidents={activeIncidents} onIncidentClick={handleMapIncidentClick} />
+                </div>
+              )}
+              {showMap && activeIncidents.length === 0 && (
+                <div className="basalt-slab p-12 text-center">
+                  <p className="font-mono text-xs text-muted-foreground uppercase">No incidents to display</p>
+                </div>
+              )}
+            </div>
+
+            {/* Selected Incident Detail */}
+            {selectedIncident && (
+              <div className="px-6 pb-6">
+                <div className="basalt-slab p-6 relative">
+                  {selectedIncident.sosActive && (
+                    <div className="absolute top-0 right-0 px-3 py-1.5 bg-primary text-primary-foreground font-mono text-[10px] font-bold uppercase">
+                      🚨 SOS Active
+                    </div>
+                  )}
+                  <div className="mb-4">
+                    <h3 className="text-xl font-bold uppercase tracking-tight">{selectedIncident.victimName}</h3>
+                    <p className="font-mono text-xs text-muted-foreground">{selectedIncident.incidentType} • {new Date(selectedIncident.time).toLocaleString()}</p>
+                  </div>
+
+                  {selectedIncident.description && (
+                    <p className="text-sm text-muted-foreground mb-4 bg-muted p-3 border border-border">
+                      {selectedIncident.description}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="bg-muted p-3 border border-border">
+                      <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">Location</p>
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedIncident.latitude},${selectedIncident.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs text-primary hover:underline flex items-center gap-1"
+                      >
+                        <MapPin className="h-3 w-3" />
+                        {selectedIncident.latitude.toFixed(4)}, {selectedIncident.longitude.toFixed(4)}
+                      </a>
+                    </div>
+                    <div className="bg-muted p-3 border border-border">
+                      <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">Authenticity</p>
+                      {(() => {
+                        const d = detectFakeScore(selectedIncident);
+                        return (
+                          <span className={`font-mono text-xs font-bold ${d.score >= 70 ? 'text-accent' : d.score >= 45 ? 'text-primary' : 'text-destructive'}`}>
+                            {d.label} ({d.score}%)
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
 
-                  <div className="mb-3 flex flex-wrap gap-1">
-                    {detection.reasons.map((r, i) => (
-                      <span key={i} className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">{r}</span>
+                  {/* Authenticity reasons */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {detectFakeScore(selectedIncident).reasons.map((r, i) => (
+                      <span key={i} className="px-2 py-0.5 bg-muted font-mono text-[9px] text-muted-foreground uppercase border border-border">{r}</span>
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                    <div className="rounded-lg bg-muted p-2">
-                      <span className="text-xs text-muted-foreground">Type</span>
-                      <p className="font-medium">{incident.incidentType}</p>
-                    </div>
-                    <div className="rounded-lg bg-muted p-2">
-                      <span className="text-xs text-muted-foreground">Location</span>
-                      <a
-                        href={`https://www.google.com/maps?q=${incident.latitude},${incident.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 font-mono text-xs text-primary hover:underline"
-                      >
-                        <MapPin className="h-3 w-3" />
-                        {incident.latitude.toFixed(4)}, {incident.longitude.toFixed(4)}
-                      </a>
-                    </div>
-                  </div>
-
-                  {incident.evidence && incident.evidence.length > 0 && (
-                    <div className="mb-3">
-                      <span className="text-xs font-semibold text-muted-foreground">Evidence ({incident.evidence.length})</span>
-                      <EvidenceViewer evidence={incident.evidence} />
+                  {/* Evidence */}
+                  {selectedIncident.evidence && selectedIncident.evidence.length > 0 && (
+                    <div className="mb-4">
+                      <p className="font-mono text-[10px] text-muted-foreground uppercase mb-2">Evidence ({selectedIncident.evidence.length})</p>
+                      <EvidenceViewer evidence={selectedIncident.evidence} />
                     </div>
                   )}
 
-                  {incident.status === 'pending' ? (
-                    <div className="flex gap-2">
+                  {/* Action */}
+                  {selectedIncident.status === 'pending' ? (
+                    <div className="flex gap-2 items-center">
                       <Select
-                        value={actionInputs[incident.id] || ''}
-                        onValueChange={val => setActionInputs(prev => ({ ...prev, [incident.id]: val }))}
+                        value={actionInputs[selectedIncident.id] || ''}
+                        onValueChange={val => setActionInputs(prev => ({ ...prev, [selectedIncident.id]: val }))}
                       >
-                        <SelectTrigger className="flex-1 text-xs">
+                        <SelectTrigger className="flex-1 font-mono text-xs bg-muted border-border">
                           <SelectValue placeholder="Select action..." />
                         </SelectTrigger>
                         <SelectContent>
                           {ACTION_OPTIONS.map(opt => (
-                            <SelectItem key={opt} value={opt} className="text-xs">{opt}</SelectItem>
+                            <SelectItem key={opt} value={opt} className="font-mono text-xs">{opt}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button onClick={() => handleResolve(incident.id)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
+                      <button
+                        onClick={() => handleResolve(selectedIncident.id)}
+                        className="px-4 py-2 bg-accent text-accent-foreground font-mono text-[10px] uppercase tracking-widest font-bold hover:bg-accent/80 transition-colors"
+                      >
                         Resolve
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </button>
+                      <button
+                        onClick={() => handleArchive(selectedIncident.id)}
+                        className="px-3 py-2 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-primary hover:border-primary transition-colors"
+                        title="Archive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between">
-                      <div className="rounded-lg bg-success/10 px-3 py-1.5 text-xs text-success">
-                        ✓ {incident.actionTaken}
+                      <div className="px-3 py-2 border border-accent/30 font-mono text-xs text-accent">
+                        ✓ {selectedIncident.actionTaken}
                       </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => generatePDF(incident)} className="text-xs">
-                          <FileText className="mr-1 h-3 w-3" /> PDF
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleArchive(incident.id)} title="Archive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => generatePDF(selectedIncident)}
+                          className="px-3 py-1.5 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-foreground transition-colors"
+                        >
+                          <FileText className="mr-1 h-3 w-3 inline" /> PDF
+                        </button>
+                        <button
+                          onClick={() => handleArchive(selectedIncident.id)}
+                          className="px-3 py-1.5 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-primary transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
                       </div>
                     </div>
                   )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Archived Incidents */}
-        {showArchived && (
-          <div>
-            <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
-              <Archive className="h-5 w-5 text-muted-foreground" />
-              Archived Incidents
-              <span className="text-xs font-normal text-muted-foreground">({archivedIncidents.length})</span>
-            </h2>
-
-            {archivedIncidents.length === 0 && (
-              <div className="rounded-xl border border-border bg-card p-6 text-center">
-                <Archive className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">No archived incidents</p>
+                </div>
               </div>
             )}
 
-            <div className="space-y-3">
-              {archivedIncidents.map((incident, idx) => (
-                <motion.div
-                  key={incident.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="rounded-xl border border-dashed border-border bg-muted/30 p-4"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <p className="font-semibold">{incident.victimName}</p>
-                      <p className="text-xs text-muted-foreground">{incident.incidentType} • {new Date(incident.time).toLocaleString()}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => handleRestore(incident.id)}>
-                        <ArchiveRestore className="mr-1 h-3 w-3" /> Restore
-                      </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => generatePDF(incident)}>
-                        <FileText className="mr-1 h-3 w-3" /> PDF
-                      </Button>
-                    </div>
+            {/* Archived */}
+            {showArchived && (
+              <div className="px-6 pb-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+                    Archived Incidents
+                  </span>
+                  <span className="font-mono text-[10px] text-muted-foreground">({archivedIncidents.length})</span>
+                </div>
+
+                {archivedIncidents.length === 0 && (
+                  <div className="basalt-slab p-8 text-center">
+                    <p className="font-mono text-xs text-muted-foreground uppercase">No archived incidents</p>
                   </div>
-                  {incident.actionTaken && (
-                    <p className="text-xs text-muted-foreground">Action: {incident.actionTaken}</p>
-                  )}
-                </motion.div>
-              ))}
-            </div>
+                )}
+
+                <div className="space-y-2">
+                  {archivedIncidents.map((incident, idx) => (
+                    <motion.div
+                      key={incident.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="basalt-slab p-4 border-dashed flex items-start justify-between"
+                    >
+                      <div>
+                        <p className="font-semibold uppercase text-sm tracking-tight">{incident.victimName}</p>
+                        <p className="font-mono text-[10px] text-muted-foreground">{incident.incidentType} • {new Date(incident.time).toLocaleString()}</p>
+                        {incident.actionTaken && (
+                          <p className="font-mono text-[10px] text-muted-foreground mt-1">Action: {incident.actionTaken}</p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleRestore(incident.id)}
+                          className="px-2 py-1 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-foreground transition-colors"
+                        >
+                          <ArchiveRestore className="mr-1 h-3 w-3 inline" /> Restore
+                        </button>
+                        <button
+                          onClick={() => generatePDF(incident)}
+                          className="px-2 py-1 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-foreground transition-colors"
+                        >
+                          <FileText className="mr-1 h-3 w-3 inline" /> PDF
+                        </button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
