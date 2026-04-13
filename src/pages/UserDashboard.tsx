@@ -168,85 +168,95 @@ const UserDashboard = () => {
   const removeEvidence = (idx: number) => setEvidence(prev => prev.filter((_, i) => i !== idx));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <AppHeader />
-      <main className="container mx-auto max-w-2xl px-4 py-6 space-y-6">
+      <main className="flex-1 container mx-auto max-w-2xl px-4 py-8 space-y-6">
         {/* SOS Section */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="basalt-slab p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+
+          <h2 className="mb-6 font-bold text-xl uppercase tracking-tight flex items-center gap-3">
             <AlertTriangle className="h-5 w-5 text-primary" />
             Emergency SOS
           </h2>
 
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="victim">Victim Name</Label>
-              <div className="relative mt-1">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="victim" value={victimName} onChange={e => setVictimName(e.target.value)} placeholder="Enter name" className="pl-9" />
-              </div>
+          <div className="space-y-5">
+            <div className="space-y-1">
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Victim Name</Label>
+              <Input
+                value={victimName}
+                onChange={e => setVictimName(e.target.value)}
+                placeholder="Enter name"
+                className="bg-muted border-none font-mono text-sm focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+              />
             </div>
 
-            <div>
-              <Label>Incident Type</Label>
-              <div className="mt-1 grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Incident Type</Label>
+              <div className="grid grid-cols-2 gap-2">
                 {INCIDENT_TYPES.map(type => (
                   <button
                     key={type}
                     onClick={() => setIncidentType(type)}
-                    className={`rounded-lg border px-3 py-2 text-sm font-medium transition-all ${incidentType === type ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
+                    className={`py-2.5 font-mono text-xs uppercase tracking-widest border transition-colors ${incidentType === type ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
                   >
                     {type}
                   </button>
                 ))}
+              </div>
             </div>
 
-            <div>
-              <Label htmlFor="desc">Description (optional)</Label>
-              <Textarea id="desc" value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe the situation..." className="mt-1" rows={3} />
-            </div>
+            <div className="space-y-1">
+              <Label className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Description (Optional)</Label>
+              <Textarea
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Describe the situation..."
+                className="bg-muted border-none font-mono text-sm focus:ring-1 focus:ring-primary placeholder:text-muted-foreground"
+                rows={3}
+              />
             </div>
 
             {/* Location */}
-            <div className="rounded-lg bg-muted p-3">
+            <div className="bg-muted p-3 border border-border">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />
                   {locLoading ? (
-                    <span className="text-muted-foreground">Detecting...</span>
+                    <span className="font-mono text-xs text-muted-foreground">Detecting...</span>
                   ) : location ? (
                     <span className="font-mono text-xs">{location.lat.toFixed(4)}, {location.lng.toFixed(4)}</span>
                   ) : (
-                    <span className="text-muted-foreground">No location</span>
+                    <span className="font-mono text-xs text-muted-foreground">No location</span>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={getLocation} className="h-7 text-xs">
-                    <Navigation className="mr-1 h-3 w-3" /> Refresh
-                  </Button>
+                  <button onClick={getLocation} className="font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground transition-colors">
+                    <Navigation className="mr-1 h-3 w-3 inline" /> Refresh
+                  </button>
                   {location && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={openMap}>
-                      <MapPin className="mr-1 h-3 w-3" /> Open Map
-                    </Button>
+                    <button onClick={openMap} className="font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground transition-colors">
+                      <MapPin className="mr-1 h-3 w-3 inline" /> Map
+                    </button>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Evidence Capture */}
+            {/* Evidence */}
             <EvidenceCapture evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
 
             {/* Shake toggle */}
-            <div className="flex items-center justify-between rounded-lg bg-muted p-3">
-              <div className="flex items-center gap-2 text-sm">
+            <div className="bg-muted p-3 border border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <Smartphone className="h-4 w-4 text-primary" />
-                <span className="font-medium">Shake to trigger SOS</span>
+                <span className="font-mono text-xs uppercase">Shake to trigger SOS</span>
               </div>
               <button
                 onClick={() => setShakeEnabled(!shakeEnabled)}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${shakeEnabled ? 'bg-primary' : 'bg-muted-foreground/30'}`}
               >
-                <span className={`inline-block h-4 w-4 rounded-full bg-primary-foreground transition-transform ${shakeEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 rounded-full bg-background transition-transform ${shakeEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
@@ -254,7 +264,13 @@ const UserDashboard = () => {
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleSOSClick}
-              className={`w-full rounded-xl py-4 text-lg font-extrabold text-primary-foreground emergency-gradient transition-all ${sosActive ? 'emergency-pulse emergency-glow' : sirenPlaying ? 'bg-destructive emergency-glow' : 'hover:emergency-glow'}`}
+              className={`w-full py-5 font-bold text-sm uppercase tracking-widest font-mono transition-all ${
+                sosActive
+                  ? 'bg-primary text-primary-foreground emergency-pulse emergency-glow'
+                  : sirenPlaying
+                  ? 'bg-destructive text-destructive-foreground emergency-glow'
+                  : 'bg-foreground text-background monolithic-btn'
+              }`}
             >
               {sosActive ? '🚨 ALERT SENT!' : sirenPlaying ? '🔇 TAP TO STOP SIREN' : '🆘 SEND SOS'}
             </motion.button>
@@ -262,24 +278,39 @@ const UserDashboard = () => {
         </motion.div>
 
         {/* Trusted Contacts */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
-            <Phone className="h-5 w-5 text-primary" />
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="basalt-slab p-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-accent" />
+
+          <h2 className="mb-4 font-bold text-lg uppercase tracking-tight flex items-center gap-3">
+            <Phone className="h-5 w-5 text-accent" />
             Trusted Contacts
-            <span className="text-xs font-normal text-muted-foreground ml-1">(Auto-notified on SOS)</span>
+            <span className="font-mono text-[10px] font-normal text-muted-foreground ml-1">(Auto-notified on SOS)</span>
           </h2>
 
           <div className="mb-4 flex gap-2">
-            <Input placeholder="Name" value={newContactName} onChange={e => setNewContactName(e.target.value)} className="flex-1" />
-            <Input placeholder="Phone" value={newContactPhone} onChange={e => setNewContactPhone(e.target.value)} className="flex-1" />
-            <Button onClick={handleAddContact} size="icon" className="emergency-gradient text-primary-foreground shrink-0">
+            <Input
+              placeholder="Name"
+              value={newContactName}
+              onChange={e => setNewContactName(e.target.value)}
+              className="flex-1 bg-muted border-none font-mono text-sm placeholder:text-muted-foreground"
+            />
+            <Input
+              placeholder="Phone"
+              value={newContactPhone}
+              onChange={e => setNewContactPhone(e.target.value)}
+              className="flex-1 bg-muted border-none font-mono text-sm placeholder:text-muted-foreground"
+            />
+            <button
+              onClick={handleAddContact}
+              className="px-4 bg-accent text-accent-foreground font-mono text-xs uppercase font-bold hover:bg-accent/80 transition-colors"
+            >
               <Plus className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
 
           <AnimatePresence>
             {contacts.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">No contacts yet</p>
+              <p className="font-mono text-xs text-muted-foreground text-center py-6 uppercase">No contacts yet</p>
             )}
             {contacts.map(c => (
               <motion.div
@@ -287,21 +318,24 @@ const UserDashboard = () => {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="flex items-center justify-between rounded-lg border border-border p-3 mb-2"
+                className="flex items-center justify-between border border-border p-3 mb-2"
               >
                 <div>
-                  <p className="text-sm font-semibold">{c.name}</p>
+                  <p className="text-sm font-semibold uppercase">{c.name}</p>
                   <p className="font-mono text-xs text-muted-foreground">{c.phone}</p>
                 </div>
                 <div className="flex gap-2">
                   <a href={`tel:${c.phone}`}>
-                    <Button variant="outline" size="sm" className="h-8 text-xs">
-                      <Phone className="mr-1 h-3 w-3" /> Call
-                    </Button>
+                    <button className="px-2 py-1 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-foreground transition-colors">
+                      <Phone className="mr-1 h-3 w-3 inline" /> Call
+                    </button>
                   </a>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleRemoveContact(c.id)}>
+                  <button
+                    onClick={() => handleRemoveContact(c.id)}
+                    className="px-2 py-1 border border-border text-muted-foreground font-mono text-[10px] uppercase hover:text-primary transition-colors"
+                  >
                     <Trash2 className="h-3 w-3" />
-                  </Button>
+                  </button>
                 </div>
               </motion.div>
             ))}
