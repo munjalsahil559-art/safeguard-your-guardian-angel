@@ -49,6 +49,7 @@ const AdminDashboard = () => {
   const [prevCount, setPrevCount] = useState(0);
   const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [mobileShowList, setMobileShowList] = useState(false);
 
   const stopAdminSiren = () => {
     if (adminSiren) { adminSiren.pause(); adminSiren.currentTime = 0; adminSiren = null; }
