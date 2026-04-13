@@ -199,11 +199,24 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Mobile Incident List Toggle */}
+        <div className="md:hidden border-b border-border p-3 flex justify-between items-center bg-muted/30">
+          <span className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {mobileShowList ? 'Incidents' : (selectedIncident ? selectedIncident.victimName : 'Select Incident')}
+          </span>
+          <button
+            onClick={() => setMobileShowList(!mobileShowList)}
+            className="px-3 py-1.5 border border-border font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            {mobileShowList ? <><X className="h-3 w-3" /> Close</> : <><List className="h-3 w-3" /> List ({activeIncidents.length})</>}
+          </button>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 grid grid-cols-12 overflow-hidden">
+        <div className="flex-1 flex flex-col md:grid md:grid-cols-12 overflow-hidden">
           {/* Left: Incident List */}
-          <aside className="col-span-4 xl:col-span-3 border-r border-border overflow-y-auto flex flex-col">
-            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+          <aside className={`${mobileShowList ? 'block' : 'hidden'} md:block md:col-span-4 xl:col-span-3 border-r border-border overflow-y-auto flex flex-col`}>
+            <div className="hidden md:flex p-4 border-b border-border justify-between items-center bg-muted/30">
               <span className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Active Incidents
               </span>
@@ -232,7 +245,7 @@ const AdminDashboard = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: idx * 0.03 }}
-                    onClick={() => setSelectedIncident(incident)}
+                    onClick={() => { setSelectedIncident(incident); setMobileShowList(false); }}
                     className={`p-4 cursor-pointer transition-colors ${
                       incident.sosActive
                         ? 'bg-primary/5 border-l-2 border-l-primary'
@@ -272,7 +285,7 @@ const AdminDashboard = () => {
           </aside>
 
           {/* Right: Map + Detail */}
-          <div className="col-span-8 xl:col-span-9 flex flex-col bg-background overflow-y-auto">
+          <div className={`${mobileShowList ? 'hidden' : 'flex'} md:flex col-span-8 xl:col-span-9 flex-col bg-background overflow-y-auto`}>
             {/* Map */}
             <div className="p-6">
               <div className="flex items-center justify-between mb-3">
