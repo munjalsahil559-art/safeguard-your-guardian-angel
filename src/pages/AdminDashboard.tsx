@@ -5,7 +5,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, Volume2, VolumeX, Archive, ArchiveRestore, Trash2, List, X } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -49,6 +49,7 @@ const AdminDashboard = () => {
   const [prevCount, setPrevCount] = useState(0);
   const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [mobileShowList, setMobileShowList] = useState(false);
 
   const stopAdminSiren = () => {
     if (adminSiren) { adminSiren.pause(); adminSiren.currentTime = 0; adminSiren = null; }
@@ -155,7 +156,7 @@ const AdminDashboard = () => {
       <AppHeader />
       <main className="flex-1 flex flex-col">
         {/* Stats Bar */}
-        <div className="grid grid-cols-4 border-b border-border">
+        <div className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
           {[
             { label: 'Total', value: activeIncidents.length, color: '' },
             { label: 'Pending', value: pending.length, color: 'text-primary' },
@@ -164,13 +165,13 @@ const AdminDashboard = () => {
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className={`p-6 ${i < 3 ? 'border-r border-border' : ''} ${stat.clickable ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+              className={`p-4 md:p-6 border-b md:border-b-0 ${i % 2 === 0 ? 'border-r border-border' : ''} md:border-r md:border-border md:last:border-r-0 ${stat.clickable ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
               onClick={() => stat.clickable && setShowArchived(!showArchived)}
             >
               <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1 tracking-widest">
                 {stat.label}
               </p>
-              <p className={`text-3xl font-bold font-mono tracking-tighter ${stat.color}`}>
+              <p className={`text-2xl md:text-3xl font-bold font-mono tracking-tighter ${stat.color}`}>
                 {String(stat.value).padStart(2, '0')}
               </p>
             </div>
@@ -198,11 +199,24 @@ const AdminDashboard = () => {
           </div>
         )}
 
+        {/* Mobile Incident List Toggle */}
+        <div className="md:hidden border-b border-border p-3 flex justify-between items-center bg-muted/30">
+          <span className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            {mobileShowList ? 'Incidents' : (selectedIncident ? selectedIncident.victimName : 'Select Incident')}
+          </span>
+          <button
+            onClick={() => setMobileShowList(!mobileShowList)}
+            className="px-3 py-1.5 border border-border font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            {mobileShowList ? <><X className="h-3 w-3" /> Close</> : <><List className="h-3 w-3" /> List ({activeIncidents.length})</>}
+          </button>
+        </div>
+
         {/* Main Content */}
-        <div className="flex-1 grid grid-cols-12 overflow-hidden">
+        <div className="flex-1 flex flex-col md:grid md:grid-cols-12 overflow-hidden">
           {/* Left: Incident List */}
-          <aside className="col-span-4 xl:col-span-3 border-r border-border overflow-y-auto flex flex-col">
-            <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+          <aside className={`${mobileShowList ? 'block' : 'hidden'} md:block md:col-span-4 xl:col-span-3 border-r border-border overflow-y-auto flex flex-col`}>
+            <div className="hidden md:flex p-4 border-b border-border justify-between items-center bg-muted/30">
               <span className="font-mono text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Active Incidents
               </span>
@@ -231,7 +245,7 @@ const AdminDashboard = () => {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: idx * 0.03 }}
-                    onClick={() => setSelectedIncident(incident)}
+                    onClick={() => { setSelectedIncident(incident); setMobileShowList(false); }}
                     className={`p-4 cursor-pointer transition-colors ${
                       incident.sosActive
                         ? 'bg-primary/5 border-l-2 border-l-primary'
@@ -271,7 +285,7 @@ const AdminDashboard = () => {
           </aside>
 
           {/* Right: Map + Detail */}
-          <div className="col-span-8 xl:col-span-9 flex flex-col bg-background overflow-y-auto">
+          <div className={`${mobileShowList ? 'hidden' : 'flex'} md:flex col-span-8 xl:col-span-9 flex-col bg-background overflow-y-auto`}>
             {/* Map */}
             <div className="p-6">
               <div className="flex items-center justify-between mb-3">
@@ -319,7 +333,7 @@ const AdminDashboard = () => {
                     </p>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div className="bg-muted p-3 border border-border">
                       <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">Location</p>
                       <a
@@ -362,7 +376,7 @@ const AdminDashboard = () => {
 
                   {/* Action */}
                   {selectedIncident.status === 'pending' ? (
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                       <Select
                         value={actionInputs[selectedIncident.id] || ''}
                         onValueChange={val => setActionInputs(prev => ({ ...prev, [selectedIncident.id]: val }))}
