@@ -156,7 +156,7 @@ const AdminDashboard = () => {
       <AppHeader />
       <main className="flex-1 flex flex-col">
         {/* Stats Bar */}
-        <div className="grid grid-cols-4 border-b border-border">
+        <div className="grid grid-cols-2 md:grid-cols-4 border-b border-border">
           {[
             { label: 'Total', value: activeIncidents.length, color: '' },
             { label: 'Pending', value: pending.length, color: 'text-primary' },
@@ -165,13 +165,13 @@ const AdminDashboard = () => {
           ].map((stat, i) => (
             <div
               key={stat.label}
-              className={`p-6 ${i < 3 ? 'border-r border-border' : ''} ${stat.clickable ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+              className={`p-4 md:p-6 border-b md:border-b-0 ${i % 2 === 0 ? 'border-r border-border' : ''} md:border-r md:border-border md:last:border-r-0 ${stat.clickable ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
               onClick={() => stat.clickable && setShowArchived(!showArchived)}
             >
               <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1 tracking-widest">
                 {stat.label}
               </p>
-              <p className={`text-3xl font-bold font-mono tracking-tighter ${stat.color}`}>
+              <p className={`text-2xl md:text-3xl font-bold font-mono tracking-tighter ${stat.color}`}>
                 {String(stat.value).padStart(2, '0')}
               </p>
             </div>
