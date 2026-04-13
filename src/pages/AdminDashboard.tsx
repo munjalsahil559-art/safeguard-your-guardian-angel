@@ -333,7 +333,7 @@ const AdminDashboard = () => {
                     </p>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div className="bg-muted p-3 border border-border">
                       <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">Location</p>
                       <a
