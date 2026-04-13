@@ -376,7 +376,7 @@ const AdminDashboard = () => {
 
                   {/* Action */}
                   {selectedIncident.status === 'pending' ? (
-                    <div className="flex gap-2 items-center">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                       <Select
                         value={actionInputs[selectedIncident.id] || ''}
                         onValueChange={val => setActionInputs(prev => ({ ...prev, [selectedIncident.id]: val }))}
