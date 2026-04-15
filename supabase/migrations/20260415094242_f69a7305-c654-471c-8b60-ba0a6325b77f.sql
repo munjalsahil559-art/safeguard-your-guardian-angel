@@ -1,0 +1,1 @@
+ALTER TABLE public.incidents DROP CONSTRAINT incidents_reported_by_fkey;
