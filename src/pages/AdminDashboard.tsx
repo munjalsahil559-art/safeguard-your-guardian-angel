@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getIncidents, updateIncident, Incident } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 import AppHeader from '@/components/AppHeader';
 import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
