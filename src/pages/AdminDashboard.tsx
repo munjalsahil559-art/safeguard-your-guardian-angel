@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getIncidents, updateIncident, Incident } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 import AppHeader from '@/components/AppHeader';
 import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
@@ -55,38 +56,52 @@ const AdminDashboard = () => {
     setAdminSirenPlaying(false);
   };
 
+  // Load incidents initially and on realtime changes
+  const loadIncidents = async () => {
+    const loaded = await getIncidents();
+    const hasActiveSOS = loaded.some(i => i.sosActive);
+
+    if (hasActiveSOS && !adminSirenPlaying) {
+      try {
+        adminSiren = new Audio('/siren.mp3');
+        adminSiren.loop = true;
+        adminSiren.play();
+        setAdminSirenPlaying(true);
+      } catch {}
+    } else if (!hasActiveSOS && adminSirenPlaying) {
+      stopAdminSiren();
+    }
+
+    if (loaded.length > prevCount && prevCount > 0) {
+      const newOnes = loaded.slice(0, loaded.length - prevCount);
+      newOnes.forEach(inc => {
+        toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
+      });
+    }
+    setPrevCount(loaded.length);
+    setIncidents(loaded);
+  };
+
   useEffect(() => {
-    const load = async () => {
-      const loaded = await getIncidents();
-      const hasActiveSOS = loaded.some(i => i.sosActive);
+    loadIncidents();
 
-      if (hasActiveSOS && !adminSirenPlaying) {
-        try {
-          adminSiren = new Audio('/siren.mp3');
-          adminSiren.loop = true;
-          adminSiren.play();
-          setAdminSirenPlaying(true);
-        } catch {}
-      } else if (!hasActiveSOS && adminSirenPlaying) {
-        stopAdminSiren();
-      }
+    // Subscribe to realtime changes on incidents table
+    const channel = supabase
+      .channel('admin-incidents')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'incidents' },
+        () => {
+          loadIncidents();
+        }
+      )
+      .subscribe();
 
-      if (loaded.length > prevCount && prevCount > 0) {
-        const newOnes = loaded.slice(0, loaded.length - prevCount);
-        newOnes.forEach(inc => {
-          toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
-        });
-      }
-      setPrevCount(loaded.length);
-      setIncidents(loaded);
-    };
-    load();
-    const interval = setInterval(load, 3000);
     return () => {
-      clearInterval(interval);
+      supabase.removeChannel(channel);
       stopAdminSiren();
     };
-  }, [prevCount, adminSirenPlaying]);
+  }, []);
 
   const handleResolve = async (id: string) => {
     const action = actionInputs[id]?.trim();
