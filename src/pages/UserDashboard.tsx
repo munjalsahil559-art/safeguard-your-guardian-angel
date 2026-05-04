@@ -7,11 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone, Bell, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShakeDetection } from '@/hooks/useShakeDetection';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
+
+type AlertMode = 'contacts' | 'admin' | 'both';
+const ALERT_MODE_KEY = 'safeguard_alert_mode';
 
 let sirenAudio: HTMLAudioElement | null = null;
 
@@ -54,6 +57,14 @@ const UserDashboard = () => {
   const [sirenPlaying, setSirenPlaying] = useState(false);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [shakeEnabled, setShakeEnabled] = useState(true);
+  const [alertMode, setAlertMode] = useState<AlertMode>(() => {
+    return (localStorage.getItem(ALERT_MODE_KEY) as AlertMode) || 'both';
+  });
+
+  const updateAlertMode = (mode: AlertMode) => {
+    setAlertMode(mode);
+    localStorage.setItem(ALERT_MODE_KEY, mode);
+  };
 
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
   const [newContactName, setNewContactName] = useState('');
@@ -131,8 +142,15 @@ const UserDashboard = () => {
 
     localStorage.setItem('safeguard_active_sos', incidentId);
 
-    const currentContacts = user ? await getContacts(user.id) : [];
-    sendAutoSOS(currentContacts, name, location);
+    localStorage.setItem('safeguard_active_sos', incidentId);
+
+    if (alertMode === 'contacts' || alertMode === 'both') {
+      const currentContacts = user ? await getContacts(user.id) : [];
+      sendAutoSOS(currentContacts, name, location);
+    }
+    if (alertMode === 'admin' || alertMode === 'both') {
+      toast.success('🛡️ Admin notified in realtime');
+    }
 
     toast.success('🚨 SOS Alert Sent! Tap again to stop siren.');
     setTimeout(() => setSosActive(false), 2000);
@@ -140,7 +158,7 @@ const UserDashboard = () => {
     setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying]);
+  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying, alertMode]);
 
   useShakeDetection(() => {
     if (shakeEnabled) {
@@ -235,6 +253,35 @@ const UserDashboard = () => {
 
             {/* Evidence Capture */}
             <EvidenceCapture evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
+
+            {/* Alert Mode */}
+            <div className="rounded-lg bg-muted p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Settings className="h-4 w-4 text-primary" />
+                <span className="font-medium">SOS Alert Mode</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: 'contacts', label: 'Contacts', icon: Phone },
+                  { key: 'admin', label: 'Admin', icon: Bell },
+                  { key: 'both', label: 'Both', icon: AlertTriangle },
+                ] as const).map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => updateAlertMode(key)}
+                    className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all ${alertMode === key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {alertMode === 'contacts' && 'Opens SMS composer for trusted contacts only.'}
+                {alertMode === 'admin' && 'Sends realtime alert to admin only.'}
+                {alertMode === 'both' && 'Notifies admin in realtime AND opens SMS composer for contacts.'}
+              </p>
+            </div>
 
             {/* Shake toggle */}
             <div className="flex items-center justify-between rounded-lg bg-muted p-3">
