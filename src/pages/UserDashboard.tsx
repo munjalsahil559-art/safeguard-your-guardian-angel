@@ -57,6 +57,14 @@ const UserDashboard = () => {
   const [sirenPlaying, setSirenPlaying] = useState(false);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
   const [shakeEnabled, setShakeEnabled] = useState(true);
+  const [alertMode, setAlertMode] = useState<AlertMode>(() => {
+    return (localStorage.getItem(ALERT_MODE_KEY) as AlertMode) || 'both';
+  });
+
+  const updateAlertMode = (mode: AlertMode) => {
+    setAlertMode(mode);
+    localStorage.setItem(ALERT_MODE_KEY, mode);
+  };
 
   const [contacts, setContacts] = useState<TrustedContact[]>([]);
   const [newContactName, setNewContactName] = useState('');
