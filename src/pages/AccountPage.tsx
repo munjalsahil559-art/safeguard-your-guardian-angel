@@ -112,27 +112,6 @@ const AccountPage = () => {
           </div>
         </motion.div>
 
-        {/* Upgrade Account */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-bold">
-            <Crown className="h-5 w-5 text-yellow-500" />
-            Upgrade Account
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">Current role: <span className="font-semibold text-foreground capitalize">{user?.role}</span></p>
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <h3 className="font-semibold text-primary mb-2">Premium Features</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 mb-4">
-              <li>✓ Priority SOS response</li>
-              <li>✓ Extended incident history</li>
-              <li>✓ Advanced evidence storage</li>
-              <li>✓ 24/7 dedicated support</li>
-            </ul>
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-              <Crown className="mr-2 h-4 w-4" /> Upgrade to Premium
-            </Button>
-          </div>
-        </motion.div>
-
         {/* Danger Zone */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="rounded-xl border border-destructive/30 bg-card p-6">
           <h2 className="mb-4 text-lg font-bold text-destructive">Danger Zone</h2>
