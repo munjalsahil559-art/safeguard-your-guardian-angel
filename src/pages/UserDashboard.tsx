@@ -142,8 +142,15 @@ const UserDashboard = () => {
 
     localStorage.setItem('safeguard_active_sos', incidentId);
 
-    const currentContacts = user ? await getContacts(user.id) : [];
-    sendAutoSOS(currentContacts, name, location);
+    localStorage.setItem('safeguard_active_sos', incidentId);
+
+    if (alertMode === 'contacts' || alertMode === 'both') {
+      const currentContacts = user ? await getContacts(user.id) : [];
+      sendAutoSOS(currentContacts, name, location);
+    }
+    if (alertMode === 'admin' || alertMode === 'both') {
+      toast.success('🛡️ Admin notified in realtime');
+    }
 
     toast.success('🚨 SOS Alert Sent! Tap again to stop siren.');
     setTimeout(() => setSosActive(false), 2000);
@@ -151,7 +158,7 @@ const UserDashboard = () => {
     setDescription('');
     setIncidentType('');
     setEvidence([]);
-  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying]);
+  }, [victimName, description, incidentType, location, user, evidence, sirenPlaying, alertMode]);
 
   useShakeDetection(() => {
     if (shakeEnabled) {
