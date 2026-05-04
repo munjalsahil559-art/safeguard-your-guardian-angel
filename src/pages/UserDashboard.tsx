@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone } from 'lucide-react';
+import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone, Bell, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShakeDetection } from '@/hooks/useShakeDetection';
 
