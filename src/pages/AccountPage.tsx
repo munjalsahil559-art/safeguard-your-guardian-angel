@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import PasswordInput from '@/components/PasswordInput';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
-import { User, Mail, Lock, LogOut, Trash2, Crown, Save } from 'lucide-react';
+import { User, Mail, Lock, LogOut, Trash2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
