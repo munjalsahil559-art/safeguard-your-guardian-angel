@@ -13,6 +13,9 @@ import { useShakeDetection } from '@/hooks/useShakeDetection';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
+type AlertMode = 'contacts' | 'admin' | 'both';
+const ALERT_MODE_KEY = 'safeguard_alert_mode';
+
 let sirenAudio: HTMLAudioElement | null = null;
 
 const playSOSAlarm = () => {
