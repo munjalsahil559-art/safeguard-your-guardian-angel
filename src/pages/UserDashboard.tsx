@@ -254,6 +254,35 @@ const UserDashboard = () => {
             {/* Evidence Capture */}
             <EvidenceCapture evidence={evidence} onAdd={addEvidence} onRemove={removeEvidence} />
 
+            {/* Alert Mode */}
+            <div className="rounded-lg bg-muted p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Settings className="h-4 w-4 text-primary" />
+                <span className="font-medium">SOS Alert Mode</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { key: 'contacts', label: 'Contacts', icon: Phone },
+                  { key: 'admin', label: 'Admin', icon: Bell },
+                  { key: 'both', label: 'Both', icon: AlertTriangle },
+                ] as const).map(({ key, label, icon: Icon }) => (
+                  <button
+                    key={key}
+                    onClick={() => updateAlertMode(key)}
+                    className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all ${alertMode === key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {alertMode === 'contacts' && 'Opens SMS composer for trusted contacts only.'}
+                {alertMode === 'admin' && 'Sends realtime alert to admin only.'}
+                {alertMode === 'both' && 'Notifies admin in realtime AND opens SMS composer for contacts.'}
+              </p>
+            </div>
+
             {/* Shake toggle */}
             <div className="flex items-center justify-between rounded-lg bg-muted p-3">
               <div className="flex items-center gap-2 text-sm">
