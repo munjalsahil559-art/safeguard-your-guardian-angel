@@ -6,7 +6,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2, Bell, Vibrate, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
