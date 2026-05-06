@@ -250,7 +250,38 @@ const AdminDashboard = () => {
           </motion.div>
         )}
 
-        {/* Map */}
+        {/* Notification Mode */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2 text-sm font-semibold">
+            <Bell className="h-4 w-4 text-primary" />
+            Admin Notification Mode
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { key: 'sound', label: 'Sound', icon: Volume2 },
+              { key: 'vibrate', label: 'Vibrate', icon: Vibrate },
+              { key: 'both', label: 'Both', icon: Bell },
+              { key: 'silent', label: 'Silent', icon: BellOff },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => updateNotifyMode(key)}
+                className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all ${notifyMode === key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {notifyMode === 'sound' && 'Plays a distinct chime + siren on new SOS.'}
+            {notifyMode === 'vibrate' && 'Vibrates device on new SOS (mobile only).'}
+            {notifyMode === 'both' && 'Plays chime, siren, and vibrates on new SOS.'}
+            {notifyMode === 'silent' && 'No sound or vibration. Only on-screen alerts.'}
+          </p>
+        </div>
+
+
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="flex items-center gap-2 text-lg font-bold">
