@@ -6,7 +6,7 @@ import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2 } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2, Bell, Vibrate, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -42,6 +42,32 @@ const detectFakeScore = (incident: Incident): { score: number; label: string; re
 
 let adminSiren: HTMLAudioElement | null = null;
 
+type NotifyMode = 'sound' | 'vibrate' | 'both' | 'silent';
+const NOTIFY_MODE_KEY = 'safeguard_admin_notify_mode';
+
+const playDistinctChime = () => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const notes = [880, 1320, 1760];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.16);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.18);
+      osc.stop(ctx.currentTime + i * 0.18 + 0.18);
+    });
+  } catch {}
+};
+
+const triggerVibration = () => {
+  try { navigator.vibrate?.([200, 100, 200, 100, 400]); } catch {}
+};
+
 const AdminDashboard = () => {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [actionInputs, setActionInputs] = useState<Record<string, string>>({});
@@ -50,6 +76,19 @@ const AdminDashboard = () => {
   const [prevCount, setPrevCount] = useState(0);
   const [adminSirenPlaying, setAdminSirenPlaying] = useState(false);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
+  const [notifyMode, setNotifyMode] = useState<NotifyMode>(() => {
+    return (localStorage.getItem(NOTIFY_MODE_KEY) as NotifyMode) || 'both';
+  });
+  const notifyModeRef = useRef<NotifyMode>(notifyMode);
+  useEffect(() => { notifyModeRef.current = notifyMode; }, [notifyMode]);
+
+  const updateNotifyMode = (mode: NotifyMode) => {
+    setNotifyMode(mode);
+    localStorage.setItem(NOTIFY_MODE_KEY, mode);
+    if (mode === 'sound' || mode === 'both') playDistinctChime();
+    if (mode === 'vibrate' || mode === 'both') triggerVibration();
+    toast.success(`Notification mode: ${mode}`);
+  };
 
   const stopAdminSiren = () => {
     if (adminSiren) { adminSiren.pause(); adminSiren.currentTime = 0; adminSiren = null; }
@@ -60,8 +99,10 @@ const AdminDashboard = () => {
   const loadIncidents = async () => {
     const loaded = await getIncidents();
     const hasActiveSOS = loaded.some(i => i.sosActive);
+    const mode = notifyModeRef.current;
+    const soundOn = mode === 'sound' || mode === 'both';
 
-    if (hasActiveSOS && !adminSirenPlaying) {
+    if (hasActiveSOS && !adminSirenPlaying && soundOn) {
       try {
         adminSiren = new Audio('/siren.mp3');
         adminSiren.loop = true;
@@ -77,6 +118,8 @@ const AdminDashboard = () => {
       newOnes.forEach(inc => {
         toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
       });
+      if (mode === 'sound' || mode === 'both') playDistinctChime();
+      if (mode === 'vibrate' || mode === 'both') triggerVibration();
     }
     setPrevCount(loaded.length);
     setIncidents(loaded);
@@ -207,7 +250,38 @@ const AdminDashboard = () => {
           </motion.div>
         )}
 
-        {/* Map */}
+        {/* Notification Mode */}
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-center gap-2 mb-2 text-sm font-semibold">
+            <Bell className="h-4 w-4 text-primary" />
+            Admin Notification Mode
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              { key: 'sound', label: 'Sound', icon: Volume2 },
+              { key: 'vibrate', label: 'Vibrate', icon: Vibrate },
+              { key: 'both', label: 'Both', icon: Bell },
+              { key: 'silent', label: 'Silent', icon: BellOff },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => updateNotifyMode(key)}
+                className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2 text-xs font-medium transition-all ${notifyMode === key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {notifyMode === 'sound' && 'Plays a distinct chime + siren on new SOS.'}
+            {notifyMode === 'vibrate' && 'Vibrates device on new SOS (mobile only).'}
+            {notifyMode === 'both' && 'Plays chime, siren, and vibrates on new SOS.'}
+            {notifyMode === 'silent' && 'No sound or vibration. Only on-screen alerts.'}
+          </p>
+        </div>
+
+
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="flex items-center gap-2 text-lg font-bold">
