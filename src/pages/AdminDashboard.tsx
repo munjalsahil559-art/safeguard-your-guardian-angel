@@ -5,8 +5,9 @@ import AppHeader from '@/components/AppHeader';
 import IncidentMap from '@/components/IncidentMap';
 import EvidenceViewer from '@/components/EvidenceViewer';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { motion } from 'framer-motion';
-import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Archive, ArchiveRestore, Trash2, Bell, Vibrate, BellOff } from 'lucide-react';
+import { Shield, MapPin, CheckCircle, Clock, FileText, AlertTriangle, Map, Eye, ShieldAlert, ShieldCheck, Volume2, VolumeX, Volume1, Archive, ArchiveRestore, Trash2, Bell, Vibrate, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import {
@@ -44,8 +45,9 @@ let adminSiren: HTMLAudioElement | null = null;
 
 type NotifyMode = 'sound' | 'vibrate' | 'both' | 'silent';
 const NOTIFY_MODE_KEY = 'safeguard_admin_notify_mode';
+const NOTIFY_VOLUME_KEY = 'safeguard_admin_notify_volume';
 
-const playDistinctChime = () => {
+const playDistinctChime = (volume: number = 0.5) => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const notes = [880, 1320, 1760];
@@ -55,7 +57,7 @@ const playDistinctChime = () => {
       osc.type = 'square';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.25 * volume, ctx.currentTime + i * 0.18 + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.16);
       osc.connect(gain).connect(ctx.destination);
       osc.start(ctx.currentTime + i * 0.18);
@@ -79,13 +81,20 @@ const AdminDashboard = () => {
   const [notifyMode, setNotifyMode] = useState<NotifyMode>(() => {
     return (localStorage.getItem(NOTIFY_MODE_KEY) as NotifyMode) || 'both';
   });
+  const [notifyVolume, setNotifyVolume] = useState<number>(() => {
+    const saved = localStorage.getItem(NOTIFY_VOLUME_KEY);
+    return saved ? parseFloat(saved) : 0.7;
+  });
   const notifyModeRef = useRef<NotifyMode>(notifyMode);
+  const notifyVolumeRef = useRef<number>(notifyVolume);
   useEffect(() => { notifyModeRef.current = notifyMode; }, [notifyMode]);
+  useEffect(() => { notifyVolumeRef.current = notifyVolume; }, [notifyVolume]);
 
   const updateNotifyMode = (mode: NotifyMode) => {
     setNotifyMode(mode);
     localStorage.setItem(NOTIFY_MODE_KEY, mode);
-    if (mode === 'sound' || mode === 'both') playDistinctChime();
+    const vol = notifyVolumeRef.current;
+    if (mode === 'sound' || mode === 'both') playDistinctChime(vol);
     if (mode === 'vibrate' || mode === 'both') triggerVibration();
     toast.success(`Notification mode: ${mode}`);
   };
@@ -100,11 +109,13 @@ const AdminDashboard = () => {
     const loaded = await getIncidents();
     const hasActiveSOS = loaded.some(i => i.sosActive);
     const mode = notifyModeRef.current;
+    const vol = notifyVolumeRef.current;
     const soundOn = mode === 'sound' || mode === 'both';
 
     if (hasActiveSOS && !adminSirenPlaying && soundOn) {
       try {
         adminSiren = new Audio('/siren.mp3');
+        adminSiren.volume = vol;
         adminSiren.loop = true;
         adminSiren.play();
         setAdminSirenPlaying(true);
@@ -118,7 +129,7 @@ const AdminDashboard = () => {
       newOnes.forEach(inc => {
         toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
       });
-      if (mode === 'sound' || mode === 'both') playDistinctChime();
+      if (mode === 'sound' || mode === 'both') playDistinctChime(vol);
       if (mode === 'vibrate' || mode === 'both') triggerVibration();
     }
     setPrevCount(loaded.length);
@@ -279,6 +290,27 @@ const AdminDashboard = () => {
             {notifyMode === 'both' && 'Plays chime, siren, and vibrates on new SOS.'}
             {notifyMode === 'silent' && 'No sound or vibration. Only on-screen alerts.'}
           </p>
+
+          {(notifyMode === 'sound' || notifyMode === 'both') && (
+            <div className="mt-3 rounded-lg border border-border bg-muted/40 p-3">
+              <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
+                {notifyVolume === 0 ? <VolumeX className="h-4 w-4" /> : notifyVolume < 0.5 ? <Volume1 className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                Sound Volume — {Math.round(notifyVolume * 100)}%
+              </div>
+              <Slider
+                value={[Math.round(notifyVolume * 100)]}
+                onValueChange={([val]) => {
+                  const vol = val / 100;
+                  setNotifyVolume(vol);
+                  localStorage.setItem(NOTIFY_VOLUME_KEY, String(vol));
+                  playDistinctChime(vol);
+                }}
+                min={0}
+                max={100}
+                step={5}
+              />
+            </div>
+          )}
         </div>
 
 
