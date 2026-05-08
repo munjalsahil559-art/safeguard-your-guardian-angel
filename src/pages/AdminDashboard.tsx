@@ -45,8 +45,9 @@ let adminSiren: HTMLAudioElement | null = null;
 
 type NotifyMode = 'sound' | 'vibrate' | 'both' | 'silent';
 const NOTIFY_MODE_KEY = 'safeguard_admin_notify_mode';
+const NOTIFY_VOLUME_KEY = 'safeguard_admin_notify_volume';
 
-const playDistinctChime = () => {
+const playDistinctChime = (volume: number = 0.5) => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const notes = [880, 1320, 1760];
@@ -56,7 +57,7 @@ const playDistinctChime = () => {
       osc.type = 'square';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0.0001, ctx.currentTime + i * 0.18);
-      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.25 * volume, ctx.currentTime + i * 0.18 + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + i * 0.18 + 0.16);
       osc.connect(gain).connect(ctx.destination);
       osc.start(ctx.currentTime + i * 0.18);
