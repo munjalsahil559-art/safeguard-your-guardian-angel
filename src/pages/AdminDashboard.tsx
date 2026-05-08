@@ -81,8 +81,14 @@ const AdminDashboard = () => {
   const [notifyMode, setNotifyMode] = useState<NotifyMode>(() => {
     return (localStorage.getItem(NOTIFY_MODE_KEY) as NotifyMode) || 'both';
   });
+  const [notifyVolume, setNotifyVolume] = useState<number>(() => {
+    const saved = localStorage.getItem(NOTIFY_VOLUME_KEY);
+    return saved ? parseFloat(saved) : 0.7;
+  });
   const notifyModeRef = useRef<NotifyMode>(notifyMode);
+  const notifyVolumeRef = useRef<number>(notifyVolume);
   useEffect(() => { notifyModeRef.current = notifyMode; }, [notifyMode]);
+  useEffect(() => { notifyVolumeRef.current = notifyVolume; }, [notifyVolume]);
 
   const updateNotifyMode = (mode: NotifyMode) => {
     setNotifyMode(mode);
