@@ -93,7 +93,8 @@ const AdminDashboard = () => {
   const updateNotifyMode = (mode: NotifyMode) => {
     setNotifyMode(mode);
     localStorage.setItem(NOTIFY_MODE_KEY, mode);
-    if (mode === 'sound' || mode === 'both') playDistinctChime();
+    const vol = notifyVolumeRef.current;
+    if (mode === 'sound' || mode === 'both') playDistinctChime(vol);
     if (mode === 'vibrate' || mode === 'both') triggerVibration();
     toast.success(`Notification mode: ${mode}`);
   };
