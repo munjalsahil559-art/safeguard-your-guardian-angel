@@ -290,6 +290,27 @@ const AdminDashboard = () => {
             {notifyMode === 'both' && 'Plays chime, siren, and vibrates on new SOS.'}
             {notifyMode === 'silent' && 'No sound or vibration. Only on-screen alerts.'}
           </p>
+
+          {(notifyMode === 'sound' || notifyMode === 'both') && (
+            <div className="mt-3 rounded-lg border border-border bg-muted/40 p-3">
+              <div className="flex items-center gap-2 mb-2 text-xs font-medium text-muted-foreground">
+                {notifyVolume === 0 ? <VolumeX className="h-4 w-4" /> : notifyVolume < 0.5 ? <Volume1 className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                Sound Volume — {Math.round(notifyVolume * 100)}%
+              </div>
+              <Slider
+                value={[Math.round(notifyVolume * 100)]}
+                onValueChange={([val]) => {
+                  const vol = val / 100;
+                  setNotifyVolume(vol);
+                  localStorage.setItem(NOTIFY_VOLUME_KEY, String(vol));
+                  playDistinctChime(vol);
+                }}
+                min={0}
+                max={100}
+                step={5}
+              />
+            </div>
+          )}
         </div>
 
 
