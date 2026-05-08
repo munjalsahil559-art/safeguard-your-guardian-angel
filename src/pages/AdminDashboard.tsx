@@ -109,11 +109,13 @@ const AdminDashboard = () => {
     const loaded = await getIncidents();
     const hasActiveSOS = loaded.some(i => i.sosActive);
     const mode = notifyModeRef.current;
+    const vol = notifyVolumeRef.current;
     const soundOn = mode === 'sound' || mode === 'both';
 
     if (hasActiveSOS && !adminSirenPlaying && soundOn) {
       try {
         adminSiren = new Audio('/siren.mp3');
+        adminSiren.volume = vol;
         adminSiren.loop = true;
         adminSiren.play();
         setAdminSirenPlaying(true);
@@ -127,7 +129,7 @@ const AdminDashboard = () => {
       newOnes.forEach(inc => {
         toast.warning(`🚨 New SOS from ${inc.victimName}!`, { duration: 5000 });
       });
-      if (mode === 'sound' || mode === 'both') playDistinctChime();
+      if (mode === 'sound' || mode === 'both') playDistinctChime(vol);
       if (mode === 'vibrate' || mode === 'both') triggerVibration();
     }
     setPrevCount(loaded.length);
