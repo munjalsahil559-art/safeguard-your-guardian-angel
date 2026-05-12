@@ -305,6 +305,18 @@ const UserDashboard = () => {
               </button>
             </div>
 
+            {/* Always-on Triple-tap (cannot be disabled) */}
+            <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 p-3">
+              <div className="flex items-center gap-2 text-sm">
+                <AlertTriangle className="h-4 w-4 text-primary" />
+                <div>
+                  <div className="font-medium">Triple-tap anywhere → SOS</div>
+                  <div className="text-[11px] text-muted-foreground">Always on. Universal emergency gesture (works on every device).</div>
+                </div>
+              </div>
+              <span className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Locked</span>
+            </div>
+
             {/* SOS Button */}
             <motion.button
               whileTap={{ scale: 0.95 }}
