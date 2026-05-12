@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone, Bell, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShakeDetection } from '@/hooks/useShakeDetection';
+import { useTripleTap } from '@/hooks/useTripleTap';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
@@ -167,6 +168,13 @@ const UserDashboard = () => {
     }
   });
 
+  // Always-on emergency gesture: triple-tap anywhere on the screen.
+  // Cannot be disabled — acts as the universal "power button" replacement.
+  useTripleTap(() => {
+    toast.warning('🆘 Triple-tap detected! Triggering SOS...');
+    handleSOSClick();
+  });
+
   const handleAddContact = async () => {
     if (!newContactName.trim() || !newContactPhone.trim()) { toast.error('Fill contact details'); return; }
     const contact: TrustedContact = { id: crypto.randomUUID(), name: newContactName.trim(), phone: newContactPhone.trim() };
@@ -295,6 +303,18 @@ const UserDashboard = () => {
               >
                 <span className={`inline-block h-4 w-4 rounded-full bg-primary-foreground transition-transform ${shakeEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
+            </div>
+
+            {/* Always-on Triple-tap (cannot be disabled) */}
+            <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 p-3">
+              <div className="flex items-center gap-2 text-sm">
+                <AlertTriangle className="h-4 w-4 text-primary" />
+                <div>
+                  <div className="font-medium">Triple-tap anywhere → SOS</div>
+                  <div className="text-[11px] text-muted-foreground">Always on. Universal emergency gesture (works on every device).</div>
+                </div>
+              </div>
+              <span className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">Locked</span>
             </div>
 
             {/* SOS Button */}
