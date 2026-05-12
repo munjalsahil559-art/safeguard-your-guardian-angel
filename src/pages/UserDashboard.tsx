@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, MapPin, Phone, Plus, Trash2, Navigation, User, Smartphone, Bell, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useShakeDetection } from '@/hooks/useShakeDetection';
+import { useTripleTap } from '@/hooks/useTripleTap';
 
 const INCIDENT_TYPES = ['Harassment', 'Accident', 'Medical', 'Other'];
 
@@ -165,6 +166,13 @@ const UserDashboard = () => {
       toast.warning('📳 Shake detected! Triggering SOS...');
       handleSOSClick();
     }
+  });
+
+  // Always-on emergency gesture: triple-tap anywhere on the screen.
+  // Cannot be disabled — acts as the universal "power button" replacement.
+  useTripleTap(() => {
+    toast.warning('🆘 Triple-tap detected! Triggering SOS...');
+    handleSOSClick();
   });
 
   const handleAddContact = async () => {
