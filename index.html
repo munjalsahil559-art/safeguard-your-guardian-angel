@@ -51,7 +51,14 @@
   </head>
 
   <body>
+    <style>
+      #initial-loader{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a;z-index:9999}
+      #initial-loader .ring{width:42px;height:42px;border-radius:50%;border:3px solid rgba(255,60,0,.2);border-top-color:#FF3C00;animation:il-spin .8s linear infinite}
+      @keyframes il-spin{to{transform:rotate(360deg)}}
+      #root:not(:empty) + #initial-loader{display:none}
+    </style>
     <div id="root"></div>
+    <div id="initial-loader" aria-hidden="true"><div class="ring"></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
