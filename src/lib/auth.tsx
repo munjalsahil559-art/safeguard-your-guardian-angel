@@ -117,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return !error;
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole): Promise<{ success: boolean; needsVerification?: boolean }> => {
+  const signup = async (name: string, email: string, password: string, _role: UserRole): Promise<{ success: boolean; needsVerification?: boolean }> => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -128,16 +128,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     if (error) return { success: false };
 
-    // If user needs email confirmation
+    // Email confirmation flow
     if (data.user && !data.session) {
       return { success: true, needsVerification: true };
     }
 
-    // If auto-confirmed and role is admin, update role
-    if (data.user && role === 'admin') {
-      await supabase.from('user_roles').update({ role: 'admin' }).eq('user_id', data.user.id);
-    }
-
+    // Admin role can NEVER be self-assigned. Privileged roles are granted
+    // only via server-side processes (migrations / Supabase dashboard).
     return { success: true };
   };
 
