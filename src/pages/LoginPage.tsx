@@ -113,27 +113,6 @@ const LoginPage = () => {
               <Label htmlFor="password">Password</Label>
               <PasswordInput id="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="mt-1" />
             </div>
-            {!isLogin && (
-              <div>
-                <Label>Role</Label>
-                <div className="mt-1 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRole('user')}
-                    className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-all ${role === 'user' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}
-                  >
-                    User
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRole('admin')}
-                    className={`flex-1 rounded-lg border py-2 text-sm font-medium transition-all ${role === 'admin' ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground'}`}
-                  >
-                    Admin
-                  </button>
-                </div>
-              </div>
-            )}
             <Button type="submit" className="w-full emergency-gradient text-primary-foreground font-semibold" disabled={submitting}>
               {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {isLogin ? 'Login' : 'Sign Up'}
